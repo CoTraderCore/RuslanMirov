@@ -26,28 +26,40 @@ import "../interfaces/PoolPortalInterface.sol";
 contract ExchangePortal is ExchangePortalInterface, Ownable {
   using SafeMath for uint256;
 
+  // PARASWAP
   address public paraswap;
   ParaswapInterface public paraswapInterface;
   IPriceFeed public priceFeedInterface;
   IParaswapParams public paraswapParams;
   address public paraswapSpender;
 
-  IOneSplitAudit oneInch;
+  // 1INCH
+  IOneSplitAudit public oneInch;
 
+  // BANCOR
   address public BancorEtherToken;
   IGetBancorAddressFromRegistry public bancorRegistry;
 
-  PermittedStabelsInterface permitedStable;
-  PoolPortalInterface poolPortal;
+  // CoTrader additional
+  PoolPortalInterface public poolPortal;
+  PermittedStabelsInterface public permitedStable;
 
+  // Enum
   enum ExchangeType { Paraswap, Bancor, OneInch}
 
-  // Paraswap recognizes ETH by this address
+  // This contract recognizes ETH by this address
   ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
   mapping (address => bool) disabledTokens;
 
-  event Trade(address trader, address src, uint256 srcAmount, address dest, uint256 destReceived, uint8 exchangeType);
+  // Trade event
+  event Trade(
+     address trader,
+     address src,
+     uint256 srcAmount,
+     address dest,
+     uint256 destReceived,
+     uint8 exchangeType);
 
   // Modifier to check that trading this token is not disabled
   modifier tokenEnabled(ERC20 _token) {
@@ -252,14 +264,25 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       10,
       0);
 
-    oneInch.swap(
-      IERC20(sourceToken),
-      IERC20(destinationToken),
-      sourceAmount,
-      1,
-      distribution,
-      0
-      );
+    if(ERC20(sourceToken) == ETH_TOKEN_ADDRESS) {
+      oneInch.swap.value(sourceAmount)(
+        IERC20(sourceToken),
+        IERC20(destinationToken),
+        sourceAmount,
+        1,
+        distribution,
+        0
+        );
+    } else {
+      oneInch.swap(
+        IERC20(sourceToken),
+        IERC20(destinationToken),
+        sourceAmount,
+        1,
+        distribution,
+        0
+        );
+    }
 
     destinationReceived = tokenBalance(ERC20(destinationToken));
  }
