@@ -26,6 +26,8 @@ import "../interfaces/PoolPortalInterface.sol";
 contract ExchangePortal is ExchangePortalInterface, Ownable {
   using SafeMath for uint256;
 
+  uint public version = 2;
+
   // PARASWAP
   address public paraswap;
   ParaswapInterface public paraswapInterface;
@@ -50,8 +52,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   // This contract recognizes ETH by this address
   ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
-  mapping (address => bool) disabledTokens;
-
   // Trade event
   event Trade(
      address trader,
@@ -60,6 +60,9 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
      address dest,
      uint256 destReceived,
      uint8 exchangeType);
+
+  // black list for non trade able tokens
+  mapping (address => bool) disabledTokens;
 
   // Modifier to check that trading this token is not disabled
   modifier tokenEnabled(ERC20 _token) {
@@ -357,7 +360,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _to        Address of token we're getting the value in
   * @param _amount    The amount of _from
   *
-  * @return best price from Paraswap or 1inch for ERC20, or ratio for Uniswap and Bancor pools 
+  * @return best price from Paraswap or 1inch for ERC20, or ratio for Uniswap and Bancor pools
   */
   function getValue(address _from, address _to, uint256 _amount) public view returns (uint256) {
      if(_amount > 0){
