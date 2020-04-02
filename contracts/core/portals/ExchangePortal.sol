@@ -17,6 +17,8 @@ import "../../bancor/interfaces/IGetBancorAddressFromRegistry.sol";
 import "../../bancor/interfaces/BancorNetworkInterface.sol";
 import "../../bancor/interfaces/PathFinderInterface.sol";
 
+import "../../oneInch/IOneSplitAudit.sol";
+
 import "../interfaces/ExchangePortalInterface.sol";
 import "../interfaces/PermittedStabelsInterface.sol";
 import "../interfaces/PoolPortalInterface.sol";
@@ -30,13 +32,15 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   IParaswapParams public paraswapParams;
   address public paraswapSpender;
 
+  IOneSplitAudit oneInch;
+
   address public BancorEtherToken;
   IGetBancorAddressFromRegistry public bancorRegistry;
 
   PermittedStabelsInterface permitedStable;
   PoolPortalInterface poolPortal;
 
-  enum ExchangeType { Paraswap, Bancor }
+  enum ExchangeType { Paraswap, Bancor, OneInch}
 
   // Paraswap recognizes ETH by this address
   ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
@@ -61,6 +65,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _BancorEtherToken       address of Bancor ETH wrapper
   * @param _permitedStable         address of permitedStable contract
   * @param _poolPortal             address of pool portal
+  * @param _oneInch                address of OneSplitAudit contract
   */
   constructor(
     address _paraswap,
@@ -69,7 +74,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _bancorRegistryWrapper,
     address _BancorEtherToken,
     address _permitedStable,
-    address _poolPortal
+    address _poolPortal,
+    address _oneInch
     )
     public
     {
@@ -82,6 +88,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     BancorEtherToken = _BancorEtherToken;
     permitedStable = PermittedStabelsInterface(_permitedStable);
     poolPortal = PoolPortalInterface(_poolPortal);
+    oneInch = IOneSplitAudit(_oneInch);
   }
 
 
@@ -135,6 +142,14 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     // SHOULD TRADE BANCOR HERE
     else if (_type == uint(ExchangeType.Bancor)){
       receivedAmount = _tradeViaBancorNewtork(
+          _source,
+          _destination,
+          _sourceAmount
+      );
+    }
+    // SHOULD TRADE 1INCH HERE
+    else if (_type == uint(ExchangeType.OneInch)){
+      receivedAmount = _tradeViaOneInch(
           _source,
           _destination,
           _sourceAmount
@@ -219,6 +234,34 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
    }
 
    destinationReceived = tokenBalance(ERC20(destinationToken));
+ }
+
+ // Facilitates trade with 1inch
+ function _tradeViaOneInch(
+   address sourceToken,
+   address destinationToken,
+   uint256 sourceAmount
+   )
+   private
+   returns(uint256 destinationReceived)
+ {
+    (, uint256[] memory distribution) = oneInch.getExpectedReturn(
+      IERC20(sourceToken),
+      IERC20(destinationToken),
+      sourceAmount,
+      10,
+      0);
+
+    oneInch.swap(
+      IERC20(sourceToken),
+      IERC20(destinationToken),
+      sourceAmount,
+      1,
+      distribution,
+      0
+      );
+
+    destinationReceived = tokenBalance(ERC20(destinationToken));
  }
 
 
@@ -327,6 +370,29 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
   }
 
+  // helper for get ratio between assets in 1inch platform
+  function getValueViaOneInch(
+    address _from,
+    address _to,
+    uint256 _amount
+  ) public view returns (uint256 value) {
+    // Check call 1inch
+    (bool success) = address(oneInch).call(
+    abi.encodeWithSelector(oneInch.getExpectedReturn.selector, IERC20(_from), IERC20(_to), _amount));
+    // if 1inch can get rate for this assets, use 1inch
+    if(success){
+      (uint256 returnAmount, ) = oneInch.getExpectedReturn(
+        IERC20(_from),
+        IERC20(_to),
+        _amount,
+        10,
+        0);
+      value = returnAmount;
+    }else{
+      value = 0;
+    }
+  }
+
   // helper for get ratio between assets in Bancor network
   function getValueViaBancor(
     address _from,
@@ -418,6 +484,11 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   // owner can change paraswap Augustus
   function setNewParaswapMain(address _paraswap) external onlyOwner {
     paraswapInterface = ParaswapInterface(_paraswap);
+  }
+
+  // owner can change oneInch
+  function setNewOneInch(address _oneInch) external onlyOwner {
+    oneInch = IOneSplitAudit(_oneInch);
   }
 
   // fallback payable function to receive ether from other contract addresses
