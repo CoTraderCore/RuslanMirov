@@ -351,25 +351,32 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
 
 
   /**
-  * @dev Gets the value of a given amount of some token
+  * @dev Gets the ratio by amount of token _from in token _to
   *
   * @param _from      Address of token we're converting from
   * @param _to        Address of token we're getting the value in
   * @param _amount    The amount of _from
   *
-  * @return best price from Paraswap (or Bancor)
+  * @return best price from Paraswap or 1inch for ERC20, or ratio for Uniswap and Bancor pools 
   */
   function getValue(address _from, address _to, uint256 _amount) public view returns (uint256) {
      if(_amount > 0){
+       // If Paraswap return 0, check from 1inch for ensure
        uint256 paraswapResult = getValueViaParaswap(_from, _to, _amount);
-       // If Paraswap return 0, check from Bancor network for ensure
        if(paraswapResult > 0)
          return paraswapResult;
-       // If Bancor return 0, check from Uniswap network for ensure
+
+       // If 1inch return 0, check from Bancor network for ensure this is not a Bancor pool
+       uint256 oneInchResult = getValueViaOneInch(_from, _to, _amount);
+       if(oneInchResult > 0)
+         return oneInchResult;
+
+       // If Bancor return 0, check from Uniswap pools for ensure this is not Uniswap pool
        uint256 bancorResult = getValueViaBancor(_from, _to, _amount);
        if(bancorResult > 0)
           return bancorResult;
 
+       // Uniswap pools return 0 if these are not Uniswap assets
        return getValueForUniswapPools(_from, _to, _amount);
      }else{
        return 0;
