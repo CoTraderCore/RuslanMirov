@@ -779,6 +779,34 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     })
   })
 
+  describe('Min return', function() {
+    it('Not allow execude transaction trade if for some reason DEX not sent min return asset', async function() {
+      // deploy smartFund with 10% success fee
+      await deployContracts(1000, 0)
+      // disable transfer in DEX
+      await exchangePortal.changeStopTransferStatus(true)
+      // give exchange portal contract some money
+      await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
+
+      // deposit in fund
+      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
+
+      await smartFundUSD.trade(
+        DAI.address,
+        toWei(String(1)),
+        xxxERC.address,
+        0,
+        [],
+        "0x",
+        1,
+        {
+          from: userOne,
+        }
+      ).should.be.rejectedWith(EVMRevert)
+    })
+  })
+
   describe('COMPOUND', function() {
     it('Correct cToken length', async function() {
       assert.equal(await cEther.balanceOf(smartFundUSD.address), 0)

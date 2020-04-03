@@ -15,6 +15,7 @@ contract ExchangePortalMock {
   uint256 public mul;
   uint256 public div;
   address public stableCoinAddress;
+  bool public stopTransfer;
 
   event Trade(address trader, address src, uint256 srcAmount, address dest, uint256 destReceived, uint8 exchangeType);
 
@@ -42,14 +43,18 @@ contract ExchangePortalMock {
       require(msg.value == 0);
     }
 
-    if (_source == ETH_TOKEN_ADDRESS) {
-      receivedAmount = getValue(_source, _destination, _sourceAmount);
-    } else {
-      _transferFromSenderAndApproveTo(_source, _sourceAmount, NULL_ADDRESS);
-      receivedAmount = getValue(_source, _destination, _sourceAmount);
+    // Transfer assets back to fund
+    if(!stopTransfer){
+      if (_source == ETH_TOKEN_ADDRESS) {
+        receivedAmount = getValue(_source, _destination, _sourceAmount);
+      } else {
+        _transferFromSenderAndApproveTo(_source, _sourceAmount, NULL_ADDRESS);
+        receivedAmount = getValue(_source, _destination, _sourceAmount);
+      }
     }
 
-    // Check if Ether was received
+
+    // transfer asset back
     if (_destination == ETH_TOKEN_ADDRESS) {
       (msg.sender).transfer(receivedAmount);
     } else {
@@ -105,6 +110,10 @@ contract ExchangePortalMock {
   function _transferFromSenderAndApproveTo(ERC20 _source, uint256 _sourceAmount, address _to) private {
     require(_source.transferFrom(msg.sender, this, _sourceAmount));
     _source.approve(_to, _sourceAmount);
+  }
+
+  function changeStopTransferStatus(bool _status) public {
+    stopTransfer = _status;
   }
 
   function pay() public payable {}
