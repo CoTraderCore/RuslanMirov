@@ -17,7 +17,8 @@ contract SmartFundInterface {
     ERC20 _destination,
     uint256 _type,
     bytes32[] additionalArgs,
-    bytes _additionalData
+    bytes _additionalData,
+    uint256 _minReturn
   )
     external;
 

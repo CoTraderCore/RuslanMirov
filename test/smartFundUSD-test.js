@@ -240,7 +240,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         await smartFundUSD.deposit(100, { from: userOne })
 
         // make a trade with the fund
-        await smartFundUSD.trade(DAI.address, 100, xxxERC.address, 0, [], "0x",{
+        await smartFundUSD.trade(DAI.address, 100, xxxERC.address, 0, [], "0x", 1,{
           from: userOne,
         })
 
@@ -258,7 +258,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         await smartFundUSD.deposit(100, { from: userOne })
 
         // make a trade with the fund
-        await smartFundUSD.trade(DAI.address, 100, xxxERC.address, 0, [], "0x",{
+        await smartFundUSD.trade(DAI.address, 100, xxxERC.address, 0, [], "0x", 1,{
           from: userOne,
         })
 
@@ -279,7 +279,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         await smartFundUSD.deposit(100, { from: userOne })
 
         // Trade 100 eth for 100 bat via kyber
-        await smartFundUSD.trade(DAI.address, 100, xxxERC.address, 0, [], "0x", {
+        await smartFundUSD.trade(DAI.address, 100, xxxERC.address, 0, [], "0x", 1,{
           from: userOne,
         })
 
@@ -300,10 +300,10 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         await DAI.approve(smartFundUSD.address, 100, { from: userOne })
         await smartFundUSD.deposit(100, { from: userOne })
 
-        await smartFundUSD.trade(DAI.address, 50, yyyERC.address, 0, [], "0x", {
+        await smartFundUSD.trade(DAI.address, 50, yyyERC.address, 0, [], "0x", 1,{
           from: userOne,
         })
-        await smartFundUSD.trade(DAI.address, 50, xxxERC.address, 0, [], "0x", {
+        await smartFundUSD.trade(DAI.address, 50, xxxERC.address, 0, [], "0x", 1,{
           from: userOne,
         })
 
@@ -331,6 +331,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
           0,
           [],
           "0x",
+          1,
           {
             from: userOne
           }
@@ -353,6 +354,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
           0,
           [],
           "0x",
+          1,
           {
             from: userOne,
           }
@@ -412,6 +414,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
           0,
           [],
           "0x",
+          1,
           {
             from: userOne,
           }
@@ -432,6 +435,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
           0,
           [],
           "0x",
+          1,
           {
             from: userOne,
           }
@@ -464,6 +468,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
           0,
           [],
           "0x",
+          1,
           {
             from: userOne,
           }
@@ -480,6 +485,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
           0,
           [],
           "0x",
+          1,
           {
             from: userOne,
           }
@@ -592,7 +598,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       await xxxERC.transfer(exchangePortal.address, 200, { from: userOne })
 
       // Trade 100 DAI for 100 XXX
-      await smartFundUSD.trade(DAI.address, 100, xxxERC.address, 0, [], "0x", {
+      await smartFundUSD.trade(DAI.address, 100, xxxERC.address, 0, [], "0x", 1,{
         from: userOne,
       })
 
@@ -670,6 +676,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -693,6 +700,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -727,6 +735,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -754,6 +763,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -800,6 +810,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -861,6 +872,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -913,6 +925,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1019,6 +1032,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1062,6 +1076,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1106,6 +1121,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1119,6 +1135,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1154,6 +1171,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1167,6 +1185,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1208,6 +1227,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne
         }
@@ -1274,6 +1294,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne
         }

@@ -226,7 +226,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         await smartFundETH.deposit({ from: userOne, value: 100 })
 
         // make a trade with the fund
-        await smartFundETH.trade(ETH_TOKEN_ADDRESS, 100, xxxERC.address, 0, [], "0x",{
+        await smartFundETH.trade(ETH_TOKEN_ADDRESS, 100, xxxERC.address, 0, [], "0x", 1,{
           from: userOne,
         })
 
@@ -243,7 +243,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         await smartFundETH.deposit({ from: userOne, value: 100 })
 
         // make a trade with the fund
-        await smartFundETH.trade(ETH_TOKEN_ADDRESS, 100, xxxERC.address, 0, [], "0x",{
+        await smartFundETH.trade(ETH_TOKEN_ADDRESS, 100, xxxERC.address, 0, [], "0x", 1,{
           from: userOne,
         })
 
@@ -263,7 +263,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         await smartFundETH.deposit({ from: userOne, value: 100 })
 
         // Trade 100 eth for 100 bat via kyber
-        await smartFundETH.trade(ETH_TOKEN_ADDRESS, 100, xxxERC.address, 0, [], "0x", {
+        await smartFundETH.trade(ETH_TOKEN_ADDRESS, 100, xxxERC.address, 0, [], "0x", 1,{
           from: userOne,
         })
 
@@ -283,10 +283,10 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         // deposit in fund
         await smartFundETH.deposit({ from: userOne, value: 100 })
 
-        await smartFundETH.trade(ETH_TOKEN_ADDRESS, 50, yyyERC.address, 0, [], "0x", {
+        await smartFundETH.trade(ETH_TOKEN_ADDRESS, 50, yyyERC.address, 0, [], "0x", 1,{
           from: userOne,
         })
-        await smartFundETH.trade(ETH_TOKEN_ADDRESS, 50, xxxERC.address, 0, [], "0x", {
+        await smartFundETH.trade(ETH_TOKEN_ADDRESS, 50, xxxERC.address, 0, [], "0x", 1,{
           from: userOne,
         })
 
@@ -311,6 +311,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
           0,
           [],
           "0x",
+          1,
           {
             from: userOne
           }
@@ -331,6 +332,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
           0,
           [],
           "0x",
+          1,
           {
             from: userOne,
           }
@@ -382,6 +384,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
           0,
           [],
           "0x",
+          1,
           {
             from: userOne,
           }
@@ -402,6 +405,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
           0,
           [],
           "0x",
+          1,
           {
             from: userOne,
           }
@@ -431,6 +435,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
           0,
           [],
           "0x",
+          1,
           {
             from: userOne,
           }
@@ -447,6 +452,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
           0,
           [],
           "0x",
+          1,
           {
             from: userOne,
           }
@@ -544,7 +550,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await xxxERC.transfer(exchangePortal.address, 200, { from: userOne })
 
       // Trade 100 ether for 100 xxx
-      await smartFundETH.trade(ETH_TOKEN_ADDRESS, 100, xxxERC.address, 0, [], "0x", {
+      await smartFundETH.trade(ETH_TOKEN_ADDRESS, 100, xxxERC.address, 0, [], "0x", 1,{
         from: userOne,
       })
 
@@ -623,6 +629,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -640,6 +647,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -671,6 +679,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -695,6 +704,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -759,6 +769,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -795,6 +806,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -847,6 +859,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -948,6 +961,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -961,6 +975,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1002,6 +1017,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1045,6 +1061,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1058,6 +1075,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1092,6 +1110,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1105,6 +1124,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1143,6 +1163,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne
         }
@@ -1163,6 +1184,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne,
         }
@@ -1224,6 +1246,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
+        1,
         {
           from: userOne
         }

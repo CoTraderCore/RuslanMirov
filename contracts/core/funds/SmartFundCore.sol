@@ -250,6 +250,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   * @param _type              The type of exchange to trade with
   * @param _additionalArgs    Array of bytes32 additional arguments
   * @param _additionalData    For any size data (if not used set just 0x0)
+  * @param _minReturn         Min expected amount of destination
   */
   function trade(
     ERC20 _source,
@@ -257,14 +258,16 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     ERC20 _destination,
     uint256 _type,
     bytes32[] _additionalArgs,
-    bytes _additionalData
+    bytes _additionalData,
+    uint256 _minReturn
   ) external onlyOwner {
+    require(_minReturn > 0, "min return should be more than 0");
 
     uint256 receivedAmount;
 
     if (_source == ETH_TOKEN_ADDRESS) {
       // Make sure fund contains enough ether
-      require(address(this).balance >= _sourceAmount);
+      require(address(this).balance >= _sourceAmount, "Not enough ETH");
       // Call trade on ExchangePortal along with ether
       receivedAmount = exchangePortal.trade.value(_sourceAmount)(
         _source,
@@ -286,9 +289,9 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
       );
     }
 
-    if (receivedAmount > 0)
-      _addToken(_destination);
+    require(receivedAmount >= _minReturn, "received amount can not be less than min return");
 
+    _addToken(_destination);
     emit Trade(_source, _sourceAmount, _destination, receivedAmount);
   }
 
