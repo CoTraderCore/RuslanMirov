@@ -277,6 +277,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
         0
         );
     } else {
+      _transferFromSenderAndApproveTo(ERC20(sourceToken), sourceAmount, address(oneInch));
       oneInch.swap(
         IERC20(sourceToken),
         IERC20(destinationToken),
