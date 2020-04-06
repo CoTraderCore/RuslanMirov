@@ -38,4 +38,6 @@ contract SmartFundInterface {
 
   // calculates the number of shares a buyer will receive for depositing `amount` of ether
   function calculateDepositToShares(uint256 _amount) public view returns (uint256);
+
+  function fundManagerWithdraw() public;
 }
