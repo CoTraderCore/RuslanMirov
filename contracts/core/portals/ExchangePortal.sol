@@ -372,7 +372,9 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
    private
    returns(uint256 returnAmount)
  {
-   _transferFromSenderAndApproveTo(ERC20(sourceToken), sourceAmount, address(synthetix));
+   // transfer from sender, and don't need additional aprove to syntetix main contract
+   // because main syntetix do burn and mint
+   require(ERC20(sourceToken).transferFrom(msg.sender, address(this), sourceAmount));
    ISynth from = ISynth(sourceToken);
    ISynth to = ISynth(destinationToken);
 
@@ -443,7 +445,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _to,
     uint256 _amount
   ) public view returns (uint256 value) {
-    // get latest exchangeRates instance 
+    // get latest exchangeRates instance
     IExchangeRates exchangeRates = IExchangeRates(
       synthetixAddressResolver.requireAndGetAddress(bytes32("ExchangeRates"),
       "Missing ExchangeRates address")
