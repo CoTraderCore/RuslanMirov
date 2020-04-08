@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
 /*
-* This contract do swap via Paraswap, 1inch, Synthetix assest, Bancor and Uniswap ppols,
+* This contract do swap via Paraswap, 1inch, Synthetix assest, Bancor and Uniswap pools,
   and then return assets back to msg.sender (smart fund)
 
   also this contract allow get ratio between assets
@@ -23,6 +23,8 @@ import "../../oneInch/IOneSplitAudit.sol";
 
 import "../../synthetix/ISynthetix.sol";
 import "../../synthetix/ISynth.sol";
+import "../../synthetix/IExchangeRates.sol";
+import "../../synthetix/IAdd"
 
 import "../interfaces/ExchangePortalInterface.sol";
 import "../interfaces/PermittedStabelsInterface.sol";
@@ -36,6 +38,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
 
   // SYTHETEX
   ISynthetix public synthetix;
+  IAddressResolver public synthetixAddressResolver;
 
   // PARASWAP
   address public paraswap;
@@ -91,6 +94,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _poolPortal             address of pool portal
   * @param _oneInch                address of 1inch OneSplitAudit contract
   * @param _synthetix              address of Synthetix contract
+  * @param _addressResolver        address of Synthetix address resolver contract
   */
   constructor(
     address _paraswap,
@@ -101,7 +105,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _permitedStable,
     address _poolPortal,
     address _oneInch,
-    address _synthetix
+    address _synthetix,
+    address _addressResolver
     )
     public
     {
@@ -115,6 +120,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     permitedStable = PermittedStabelsInterface(_permitedStable);
     poolPortal = PoolPortalInterface(_poolPortal);
     oneInch = IOneSplitAudit(_oneInch);
+    synthetix = ISynthetix(_synthetix);
+    synthetixAddressResolver = IAddressResolver(_addressResolver);
   }
 
 
@@ -426,6 +433,26 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
      }else{
        return 0;
      }
+  }
+
+  // helper for get ratio between assets in Paraswap platform
+  // NOTE this works only for synthetix assets
+  // (For get value in non synthetix assets need first convert to sUSD or sETH and then use Uniswap rate)
+  function getValueViaSynthetix(
+    address _from,
+    address _to,
+    uint256 _amount
+  ) public view returns (uint256 value) {
+    // get latest exchangeRates instance 
+    IExchangeRates exchangeRates = IExchangeRates(
+      synthetixAddressResolver.requireAndGetAddress(bytes32("ExchangeRates"),
+      "Missing ExchangeRates address")
+    );
+
+    ISynth from = ISynth(_from);
+    ISynth to = ISynth(_to);
+
+    return exchangeRates.effectiveValue(from.currencyKey(), _amount, to.currencyKey());
   }
 
   // helper for get ratio between assets in Paraswap platform
