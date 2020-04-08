@@ -1,8 +1,10 @@
 pragma solidity ^0.4.24;
 
 /*
-* This contract do trade via Paraswap, Bancor and Uniswap, and then return assets to smart funds
-* and also allow get ratio between smart fund assets
+* This contract do swap via Paraswap, 1inch, Synthetix assest, Bancor and Uniswap ppols,
+  and then return assets back to msg.sender (smart fund)
+
+  also this contract allow get ratio between assets
 */
 
 import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -19,14 +21,21 @@ import "../../bancor/interfaces/PathFinderInterface.sol";
 
 import "../../oneInch/IOneSplitAudit.sol";
 
+import "../../synthetix/ISynthetix.sol";
+import "../../synthetix/ISynth.sol";
+
 import "../interfaces/ExchangePortalInterface.sol";
 import "../interfaces/PermittedStabelsInterface.sol";
 import "../interfaces/PoolPortalInterface.sol";
+
 
 contract ExchangePortal is ExchangePortalInterface, Ownable {
   using SafeMath for uint256;
 
   uint public version = 2;
+
+  // SYTHETEX
+  ISynthetix public synthetix;
 
   // PARASWAP
   address public paraswap;
@@ -47,7 +56,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   PermittedStabelsInterface public permitedStable;
 
   // Enum
-  enum ExchangeType { Paraswap, Bancor, OneInch}
+  enum ExchangeType { Paraswap, Bancor, OneInch, Synthetix}
 
   // This contract recognizes ETH by this address
   ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
@@ -80,7 +89,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _BancorEtherToken       address of Bancor ETH wrapper
   * @param _permitedStable         address of permitedStable contract
   * @param _poolPortal             address of pool portal
-  * @param _oneInch                address of OneSplitAudit contract
+  * @param _oneInch                address of 1inch OneSplitAudit contract
+  * @param _synthetix              address of Synthetix contract
   */
   constructor(
     address _paraswap,
@@ -90,7 +100,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _BancorEtherToken,
     address _permitedStable,
     address _poolPortal,
-    address _oneInch
+    address _oneInch,
+    address _synthetix
     )
     public
     {
@@ -106,6 +117,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     oneInch = IOneSplitAudit(_oneInch);
   }
 
+
+  // EXCHANGE Functions
 
   /**
   * @dev Facilitates a trade for a SmartFund
@@ -165,6 +178,15 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     // SHOULD TRADE 1INCH HERE
     else if (_type == uint(ExchangeType.OneInch)){
       receivedAmount = _tradeViaOneInch(
+          _source,
+          _destination,
+          _sourceAmount
+      );
+    }
+
+    // SHOULD TRADE Synthetix HERE
+    else if(_type == uint(ExchangeType.Synthetix)){
+      receivedAmount = _tradeViaSynthetix(
           _source,
           _destination,
           _sourceAmount
@@ -333,12 +355,23 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
  }
 
+ // Facilitates trade with Synthetix
+ // Note this works only for Synth assets
+ function _tradeViaSynthetix(
+   address sourceToken,
+   address destinationToken,
+   uint256 sourceAmount
+   )
+   private
+   returns(uint256 returnAmount)
+ {
+   _transferFromSenderAndApproveTo(ERC20(sourceToken), sourceAmount, address(synthetix));
+   ISynth from = ISynth(sourceToken);
+   ISynth to = ISynth(destinationToken);
 
- function tokenBalance(ERC20 _token) private view returns (uint256) {
-   if (_token == ETH_TOKEN_ADDRESS)
-     return address(this).balance;
-   return _token.balanceOf(address(this));
+   returnAmount = synthetix.exchange(from.currencyKey(), sourceAmount, to.currencyKey());
  }
+
 
   /**
   * @dev Transfers tokens to this contract and approves them to another address
@@ -353,6 +386,14 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     _source.approve(_to, _sourceAmount);
   }
 
+
+  // VIEW Functions
+
+  function tokenBalance(ERC20 _token) private view returns (uint256) {
+    if (_token == ETH_TOKEN_ADDRESS)
+      return address(this).balance;
+    return _token.balanceOf(address(this));
+  }
 
   /**
   * @dev Gets the ratio by amount of token _from in token _to
@@ -494,6 +535,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
     return sum;
   }
+
+  // SETTERS Functions
 
   /**
   * @dev Allows the owner to disable/enable the buying of a token
