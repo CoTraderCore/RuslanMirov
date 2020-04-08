@@ -24,7 +24,7 @@ import "../../oneInch/IOneSplitAudit.sol";
 import "../../synthetix/ISynthetix.sol";
 import "../../synthetix/ISynth.sol";
 import "../../synthetix/IExchangeRates.sol";
-import "../../synthetix/IAdd"
+import "../../synthetix/IAddressResolver.sol";
 
 import "../interfaces/ExchangePortalInterface.sol";
 import "../interfaces/PermittedStabelsInterface.sol";
