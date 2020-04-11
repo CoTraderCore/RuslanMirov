@@ -39,7 +39,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   // SYTHETEX
   ISynthetix public synthetix;
   IAddressResolver public synthetixAddressResolver;
-  address public SYNTHETIX_ETH;
+  address public SYNTHETIX_USD;
 
   // PARASWAP
   address public paraswap;
@@ -96,7 +96,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _oneInch                address of 1inch OneSplitAudit contract
   * @param _synthetix              address of Synthetix contract
   * @param _addressResolver        address of Synthetix address resolver contract
-  * @param _synthetixETH           address of sETH
+  * @param _synthetixUSD           address of sUSD
   */
   constructor(
     address _paraswap,
@@ -109,7 +109,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _oneInch,
     address _synthetix,
     address _addressResolver,
-    address _synthetixETH
+    address _synthetixUSD
     )
     public
     {
@@ -125,7 +125,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     oneInch = IOneSplitAudit(_oneInch);
     synthetix = ISynthetix(_synthetix);
     synthetixAddressResolver = IAddressResolver(_addressResolver);
-    SYNTHETIX_ETH = _synthetixETH;
+    SYNTHETIX_USD = _synthetixUSD;
   }
 
 
@@ -508,22 +508,20 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
   }
 
-  // helper for get value from Syntetix asset to any asset in Uniswap
-  // NOTE _from should be syntetix asset, and _to Uniswap (ETH by default)
+  // helper for get value from Syntetix asset to any asset in DEXs which support sUSD
+  // NOTE _from should be syntetix asset
   function getValueViaSynthetix(
     address _from,
     address _to,
     uint256 _amount
   ) public view returns (uint256 value) {
-    if(_from == SYNTHETIX_ETH){
-      // get value in Uniswap via Paraswap aggregator
-      return getValueViaParaswap(_from, _to, _amount);
-    }else{
-      // convert _from asset to Synthetix ETH
-      uint256 sETHAmount = getValueBetweenOnlySynthetixAssets(_from, SYNTHETIX_ETH, _amount);
-      // get value in Uniswap for Synthetix ETH output
-      return getValueViaParaswap(SYNTHETIX_ETH, _to, sETHAmount);
-    }
+    // convert _from asset to Synthetix USD
+    uint256 sUSDAmount = (_from == SYNTHETIX_USD)
+    ? _amount // no need convert if this sUSD
+    : getValueBetweenOnlySynthetixAssets(_from, SYNTHETIX_USD, _amount);
+
+    // get value in Uniswap for Synthetix USD output
+    return getValueViaParaswap(SYNTHETIX_USD, _to, sUSDAmount);
   }
 
   // helper for get ratio between assets in Synthetix network
