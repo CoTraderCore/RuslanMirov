@@ -1453,6 +1453,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundETH.addressToShares.call(userOne), toWei(String(2)))
     })
   })
+
   describe('SYNTHETIX', function() {
     it('Should be able trade via syntetix', async function() {
       // deploy smartFund with 10% success fee
@@ -1469,7 +1470,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         0,
         [],
         "0x",
-        1,
+        toWei(String(1)),
         {
           from: userOne,
         }
@@ -1486,7 +1487,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         3,
         [],
         "0x",
-        1,
+        toWei(String(1)),
         {
           from: userOne,
         }
