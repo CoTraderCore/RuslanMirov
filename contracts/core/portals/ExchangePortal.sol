@@ -520,9 +520,9 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       return getValueViaParaswap(_from, _to, _amount);
     }else{
       // convert _from asset to Synthetix ETH
-      uint256 sETHAmount = getValueBetweenOnlySynthetixAssets(_from, _to, _amount);
+      uint256 sETHAmount = getValueBetweenOnlySynthetixAssets(_from, SYNTHETIX_ETH, _amount);
       // get value in Uniswap for Synthetix ETH output
-      return getValueViaParaswap(_from, _to, sETHAmount);
+      return getValueViaParaswap(SYNTHETIX_ETH, _to, sETHAmount);
     }
   }
 
@@ -580,11 +580,14 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     // sum ETH with ERC amount in ETH
     uint256 totalETH = ethAmount.add(ercAmountInETH);
 
-    // if no USD based fund return just ETH
-    if(!permitedStable.permittedAddresses(_to))
-       return totalETH;
-    // else convert ETH result to USD and return value in USD
-    return getValueViaParaswap(ETH_TOKEN_ADDRESS, _to, totalETH);
+    // if _to == ETH no need additional convert, just return ETH amount
+    if(_to == address(ETH_TOKEN_ADDRESS)){
+      return totalETH;
+    }
+    // convert ETH into _to asset via Paraswap
+    else{
+      return getValueViaParaswap(ETH_TOKEN_ADDRESS, _to, totalETH);
+    }
   }
 
   /**
