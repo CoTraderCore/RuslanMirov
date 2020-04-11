@@ -1,10 +1,10 @@
 pragma solidity ^0.4.24;
 
 /*
-* This contract do swap via Paraswap, 1inch, Synthetix assest, Bancor and Uniswap pools,
-  and then return assets back to msg.sender (smart fund)
+* This contract do swap via Paraswap, 1inch, Synthetix (between synth assest),
+  Bancor and Uniswap pools, and then return assets back to msg.sender (smart fund)
 
-  also this contract allow get ratio between assets
+  Also this contract allow get ratio between assets
 */
 
 import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -39,6 +39,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   // SYTHETEX
   ISynthetix public synthetix;
   IAddressResolver public synthetixAddressResolver;
+  address public SYNTHETIX_ETH;
 
   // PARASWAP
   address public paraswap;
@@ -95,6 +96,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _oneInch                address of 1inch OneSplitAudit contract
   * @param _synthetix              address of Synthetix contract
   * @param _addressResolver        address of Synthetix address resolver contract
+  * @param _synthetixETH           address of sETH
   */
   constructor(
     address _paraswap,
@@ -106,7 +108,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _poolPortal,
     address _oneInch,
     address _synthetix,
-    address _addressResolver
+    address _addressResolver,
+    address _synthetixETH
     )
     public
     {
@@ -122,6 +125,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     oneInch = IOneSplitAudit(_oneInch);
     synthetix = ISynthetix(_synthetix);
     synthetixAddressResolver = IAddressResolver(_addressResolver);
+    SYNTHETIX_ETH = _synthetixETH;
   }
 
 
@@ -425,39 +429,25 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
        if(oneInchResult > 0)
          return oneInchResult;
 
-       // If Bancor return 0, check from Uniswap pools for ensure this is not Uniswap pool
+       // If Bancor return 0, check from Syntetix network for ensure this is not Synth asset
        uint256 bancorResult = getValueViaBancor(_from, _to, _amount);
        if(bancorResult > 0)
           return bancorResult;
 
-       // Uniswap pools return 0 if these are not Uniswap assets
+       // If Syntetix return 0, check from Uniswap pools for ensure this is not Uniswap pool
+       uint256 synthetixResult = getValueViaSynthetix(_from, _to, _amount);
+       if(synthetixResult > 0)
+          return synthetixResult;
+
+       // Uniswap pools return 0 if these is not a Uniswap pool
        return getValueForUniswapPools(_from, _to, _amount);
-     }else{
+     }
+     else{
        return 0;
      }
   }
 
-  // helper for get ratio between assets in Paraswap platform
-  // NOTE this works only for synthetix assets
-  // (For get value in non synthetix assets need first convert to sUSD or sETH and then use Uniswap rate)
-  function getValueViaSynthetix(
-    address _from,
-    address _to,
-    uint256 _amount
-  ) public view returns (uint256 value) {
-    // get latest exchangeRates instance
-    IExchangeRates exchangeRates = IExchangeRates(
-      synthetixAddressResolver.requireAndGetAddress(bytes32("ExchangeRates"),
-      "Missing ExchangeRates address")
-    );
-
-    ISynth from = ISynth(_from);
-    ISynth to = ISynth(_to);
-
-    return exchangeRates.effectiveValue(from.currencyKey(), _amount, to.currencyKey());
-  }
-
-  // helper for get ratio between assets in Paraswap platform
+  // helper for get ratio between assets in Paraswap aggregator
   function getValueViaParaswap(
     address _from,
     address _to,
@@ -474,7 +464,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
   }
 
-  // helper for get ratio between assets in 1inch platform
+  // helper for get ratio between assets in 1inch aggregator
   function getValueViaOneInch(
     address _from,
     address _to,
@@ -518,8 +508,57 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
   }
 
+  // helper for get value from Syntetix asset to any asset in Uniswap
+  // NOTE _from should be syntetix asset, and _to Uniswap (ETH by default)
+  function getValueViaSynthetix(
+    address _from,
+    address _to,
+    uint256 _amount
+  ) public view returns (uint256 value) {
+    if(_from == SYNTHETIX_ETH){
+      // get value in Uniswap via Paraswap aggregator
+      return getValueViaParaswap(_from, _to, _amount);
+    }else{
+      // convert _from asset to Synthetix ETH
+      uint256 sETHAmount = getValueBetweenOnlySynthetixAssets(_from, _to, _amount);
+      // get value in Uniswap for Synthetix ETH output
+      return getValueViaParaswap(_from, _to, sETHAmount);
+    }
+  }
+
+  // helper for get ratio between assets in Synthetix network
+  // NOTE this works only for synthetix assets
+  function getValueBetweenOnlySynthetixAssets(
+    address _from,
+    address _to,
+    uint256 _amount
+  ) public view returns (uint256 value) {
+    // get latest exchangeRates instance
+    IExchangeRates exchangeRates = IExchangeRates(
+      synthetixAddressResolver.requireAndGetAddress(bytes32("ExchangeRates"),
+      "Missing ExchangeRates address")
+    );
+
+    ISynth from = ISynth(_from);
+    ISynth to = ISynth(_to);
+
+    // check if can be called without error for input pairs
+    (bool success) = address(exchangeRates).call(
+    abi.encodeWithSelector(exchangeRates.effectiveValue.selector,
+      from.currencyKey(),
+      _amount,
+      to.currencyKey())
+    );
+
+    if(success){
+      return exchangeRates.effectiveValue(from.currencyKey(), _amount, to.currencyKey());
+    }else{
+      return 0;
+    }
+  }
+
   // helper for get ratio between pools in Uniswap network
-  // _from - uniswap pool address
+  // _from - should be uniswap pool address
   function getValueForUniswapPools(
     address _from,
     address _to,
