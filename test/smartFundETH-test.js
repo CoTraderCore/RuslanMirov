@@ -13,6 +13,8 @@ require('chai')
   .use(require('chai-bignumber')(BigNumber))
   .should()
 
+const ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+
 const SmartFundETH = artifacts.require('./core/funds/SmartFundETH.sol')
 const Token = artifacts.require('./tokens/Token')
 const ExchangePortalMock = artifacts.require('./portalsMock/ExchangePortalMock')
@@ -20,16 +22,38 @@ const PoolPortalMock = artifacts.require('./portalsMock/PoolPortalMock')
 const CoTraderDAOWalletMock = artifacts.require('./CoTraderDAOWalletMock')
 const CToken = artifacts.require('./compoundMock/CTokenMock')
 const CEther = artifacts.require('./compoundMock/CEtherMock')
-const ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+const Synthetix = artifacts.require('./synthetixMock/Synthetix')
+const Synth = artifacts.require('./synthetixMock/Synth')
+const ExchangeRates = artifacts.require('./synthetixMock/ExchangeRates')
+const AddressResolver = artifacts.require('./synthetixMock/AddressResolver')
 
-let xxxERC, DAI, exchangePortal, smartFundETH, cToken, cEther, BNT, DAIUNI, DAIBNT, poolPortal, COT_DAO_WALLET, yyyERC
+
+let xxxERC,
+    DAI,
+    exchangePortal,
+    smartFundETH,
+    cToken,
+    cEther,
+    BNT,
+    DAIUNI,
+    DAIBNT,
+    poolPortal,
+    COT_DAO_WALLET,
+    yyyERC,
+    sETH,
+    sUSD,
+    synthetix,
+    synthetixRates,
+    synthetixAddressResolver
+
+
 
 contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
   async function deployContracts(successFee=1000, platformFee=0){
     COT_DAO_WALLET = await CoTraderDAOWalletMock.new()
 
-    // Deploy xxx Token
+    // DEPLOY ERC20 TOKENS
     xxxERC = await Token.new(
       "xxxERC20",
       "xxx",
@@ -37,7 +61,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       toWei(String(100000000))
     )
 
-    // Deploy yyy Token
     yyyERC = await Token.new(
       "yyyERC20",
       "yyy",
@@ -45,7 +68,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       toWei(String(100000000))
     )
 
-    // Deploy BNT Token
     BNT = await Token.new(
       "Bancor Newtork Token",
       "BNT",
@@ -53,7 +75,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       toWei(String(100000000))
     )
 
-    // Deploy DAIBNT Token
     DAIBNT = await Token.new(
       "DAI Bancor",
       "DAIBNT",
@@ -61,7 +82,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       toWei(String(100000000))
     )
 
-    // Deploy DAIUNI Token
     DAIUNI = await Token.new(
       "DAI Uniswap",
       "DAIUNI",
@@ -69,7 +89,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       toWei(String(100000000))
     )
 
-    // Deploy DAI Token
     DAI = await Token.new(
       "DAI Stable Coin",
       "DAI",
@@ -77,6 +96,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       toWei(String(100000000))
     )
 
+    // DEPLOY COMPOUND TOKENS
     cToken = await CToken.new(
       "Compound DAI",
       "CDAI",
@@ -92,8 +112,53 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       toWei(String(100000000))
     )
 
+    // Deploy Synthetix address resolver
+    synthetixAddressResolver = await AddressResolver.new()
+
+    // Deploy Synthetix Rates
+    synthetixRates = await ExchangeRates.new()
+
+    // Deploy main Synthetix contract
+    synthetix = await Synthetix.new(
+      'SYNTHETIX',
+      'SNT',
+      18,
+      toWei(String(100000000)),
+      synthetixAddressResolver.address,
+      synthetixRates.address
+    )
+
+    // DEPLOY SYNTHETIX TOKENS
+    sETH = await Synth.new(
+      'SYNTHETIX ETH',
+      'sETH',
+      18,
+      toWei(String(100)),
+      synthetix.address
+    )
+
+    sUSD = await Synth.new(
+      'SYNTHETIX USD',
+      'sUSD',
+      18,
+      toWei(String(100)),
+      synthetix.address
+    )
+
+    // Add Synthetix Contracts in addressResolver
+    await synthetixAddressResolver.addAddress('sETH', sETH.address)
+    await synthetixAddressResolver.addAddress('sUSD', sUSD.address)
+    await synthetixAddressResolver.addAddress('ExchangeRates', synthetixRates.address)
+
+
     // Deploy exchangePortal
-    exchangePortal = await ExchangePortalMock.new(1, 1, DAI.address)
+    exchangePortal = await ExchangePortalMock.new(
+      1,
+      1,
+      DAI.address,
+      synthetix.address,
+      synthetixAddressResolver.address
+    )
 
     // Depoy poolPortal
     poolPortal = await PoolPortalMock.new(BNT.address, DAI.address, DAIBNT.address, DAIUNI.address)
@@ -155,6 +220,27 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       const totalSupplyCE = await cEther.totalSupply()
       assert.equal(nameCE, "Compound Ether")
       assert.equal(totalSupplyCE, toWei(String(100000000)))
+
+
+      const sETHSymbol = await sETH.symbol()
+      const sETHTotalSupply = await sETH.totalSupply()
+      assert.equal(sETHSymbol, "sETH")
+      assert.equal(sETHTotalSupply, toWei(String(100)))
+      assert.equal(await sETH.owner(), synthetix.address)
+
+
+      const sUSDSymbol = await sUSD.symbol()
+      const sUSDTotalSupply = await sUSD.totalSupply()
+      assert.equal(sUSDSymbol, "sUSD")
+      assert.equal(sUSDTotalSupply, toWei(String(100)))
+      assert.equal(await sUSD.owner(), synthetix.address)
+    })
+
+    it('Correct init exchange portal', async function() {
+      assert.equal(await exchangePortal.synthetix(), synthetix.address)
+      assert.equal(await exchangePortal.synthetixAddressResolver(),
+      synthetixAddressResolver.address)
+      assert.equal(await exchangePortal.stableCoinAddress(), DAI.address)
     })
 
 
@@ -1365,6 +1451,49 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.setWhitelistOnly(false)
       await smartFundETH.deposit({ from: userOne, value: 100 })
       assert.equal(await smartFundETH.addressToShares.call(userOne), toWei(String(2)))
+    })
+  })
+  describe('SYNTHETIX', function() {
+    it('Should be able trade via syntetix', async function() {
+      // deploy smartFund with 10% success fee
+      await deployContracts(1000, 0)
+      // give exchange portal contract 1 syntetix ETH
+      await sETH.transfer(exchangePortal.address, toWei(String(1)))
+      // deposit in fund
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
+      // change ETH to sETH via type 0 (Paraswap)
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        toWei(String(1)),
+        sETH.address,
+        0,
+        [],
+        "0x",
+        1,
+        {
+          from: userOne,
+        }
+      )
+      // check smart fund received sETH and send ETH
+      assert.equal(await sETH.balanceOf(smartFundETH.address), toWei(String(1)))
+      assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
+
+      // change sETH to sUSD via Synthetix (type 3)
+      await smartFundETH.trade(
+        sETH.address,
+        toWei(String(1)),
+        sUSD.address,
+        3,
+        [],
+        "0x",
+        1,
+        {
+          from: userOne,
+        }
+      )
+      // check smart fund received sUSD and send sETH
+      assert.equal(await sETH.balanceOf(smartFundETH.address), 0)
+      assert.equal(await sUSD.balanceOf(smartFundETH.address), toWei(String(1)))
     })
   })
   //END

@@ -39,7 +39,7 @@ let xxxERC,
     atackContract,
     atackContractAsManager
 
-contract('SmartFundETH', function([userOne, userTwo, userThree]) {
+contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
 
   async function deployContracts(successFee=1000, platformFee=0){
     COT_DAO_WALLET = await CoTraderDAOWalletMock.new()
@@ -108,7 +108,13 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     )
 
     // Deploy exchangePortal
-    exchangePortal = await ExchangePortalMock.new(1, 1, DAI.address)
+    exchangePortal = await ExchangePortalMock.new(
+      1,
+      1,
+      DAI.address,
+      '0x0000000000000000000000000000000000000000',
+      '0x0000000000000000000000000000000000000000'
+    )
 
     // Depoy poolPortal
     poolPortal = await PoolPortalMock.new(BNT.address, DAI.address, DAIBNT.address, DAIUNI.address)
@@ -212,7 +218,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // check fund balance (now fund balance have 2 ETH)
       assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(2)))
 
-      // Atack contract now manager  
+      // Atack contract now manager
       await smartFundETH.transferOwnership(atackContract.address)
       // Atack
       await atackContract.startAtack({ from: userOne }).should.be.rejectedWith(EVMRevert)

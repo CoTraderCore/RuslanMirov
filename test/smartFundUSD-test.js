@@ -91,7 +91,13 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     )
 
     // Deploy exchangePortal
-    exchangePortal = await ExchangePortalMock.new(1, 1, DAI.address)
+    exchangePortal = await ExchangePortalMock.new(
+      1,
+      1,
+      DAI.address,
+      '0x0000000000000000000000000000000000000000',
+      '0x0000000000000000000000000000000000000000'
+    )
     // Depoy poolPortal
     poolPortal = await PoolPortalMock.new(BNT.address, DAI.address, DAIBNT.address, DAIUNI.address)
 

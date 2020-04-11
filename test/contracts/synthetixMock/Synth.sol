@@ -6,6 +6,7 @@ import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 contract Synth is StandardToken, DetailedERC20 {
   address public owner;
+  bytes32 public currencyKey;
 
   constructor(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply, address _owner)
     DetailedERC20(_name, _symbol, _decimals)
@@ -14,10 +15,11 @@ contract Synth is StandardToken, DetailedERC20 {
     // Initialize totalSupply
     totalSupply_ = _totalSupply;
     // Initialize Holder
-    // This contract is owner of all cEthers
-    balances[address(this)] = _totalSupply;
-
+    balances[msg.sender] = _totalSupply;
+    // Initial owner
     owner = _owner;
+    // Initial synth key
+    currencyKey = stringToBytes32(_symbol);
   }
 
   modifier onlyOwner() {
@@ -35,4 +37,17 @@ contract Synth is StandardToken, DetailedERC20 {
     balances[_who] = balances[_who].sub(_value);
     totalSupply_ = totalSupply_.sub(_value);
   }
+
+
+  // helper for convert dynamic string size to fixed bytes32 size 
+  function stringToBytes32(string memory source) private pure returns (bytes32 result) {
+    bytes memory tempEmptyStringTest = bytes(source);
+    if (tempEmptyStringTest.length == 0) {
+        return 0x0;
+    }
+
+    assembly {
+        result := mload(add(source, 32))
+    }
+   }
 }
