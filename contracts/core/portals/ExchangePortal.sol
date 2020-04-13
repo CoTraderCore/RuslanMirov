@@ -1,10 +1,11 @@
 pragma solidity ^0.4.24;
 
 /*
-* This contract do swap via Paraswap, 1inch, Synthetix (between synth assest),
-  Bancor and Uniswap pools, and then return assets back to msg.sender (smart fund)
+* This contract do swap for ERC20 via Paraswap, 1inch, and Synthetix (between synth assest),
+  Also Borrow and Reedem via Compound
 
-  Also this contract allow get ratio between assets
+  Also this contract allow get ratio between crypto curency assets
+  Also get ratio for Bancor and Uniswap pools, Syntetix and Compound assets 
 */
 
 import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";

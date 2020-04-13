@@ -1015,15 +1015,15 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
       // reedem with 101%
       await smartFundETH.compoundRedeemByPercent(101, cEther.address)
-      .should.be.rejectedWith(EVMRevert)
+      assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
 
       // reedem with 0%
       await smartFundETH.compoundRedeemByPercent(0, cEther.address)
-      .should.be.rejectedWith(EVMRevert)
+      assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
 
       // reedem with 100%
       await smartFundETH.compoundRedeemByPercent(100, cEther.address)
-      .should.be.fulfilled
+      assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(1)))
     })
 
 

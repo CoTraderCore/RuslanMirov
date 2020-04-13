@@ -896,18 +896,6 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
   })
 
   describe('COMPOUND', function() {
-    it('Correct cToken length', async function() {
-      assert.equal(await cEther.balanceOf(smartFundUSD.address), 0)
-      // deposit in fund
-      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
-      await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
-      // mint DAI Ctoken
-      await smartFundUSD.compoundMint(toWei(String(0.5)), cToken.address)
-      // mint DAI Ctoken
-      await smartFundUSD.compoundMint(toWei(String(0.5)), cToken.address)
-      assert.equal(await smartFundUSD.compoundCTokensLength(), 1)
-    })
-
     it('Fund Manager can mint and reedem CEther', async function() {
       assert.equal(await cEther.balanceOf(smartFundUSD.address), 0)
 
@@ -1095,15 +1083,15 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
 
       // reedem with 101%
       await smartFundUSD.compoundRedeemByPercent(101, cToken.address)
-      .should.be.rejectedWith(EVMRevert)
+      assert.equal(await DAI.balanceOf(smartFundUSD.address), 0)
 
       // reedem with 0%
       await smartFundUSD.compoundRedeemByPercent(0, cToken.address)
-      .should.be.rejectedWith(EVMRevert)
+      assert.equal(await DAI.balanceOf(smartFundUSD.address), 0)
 
       // reedem with 100%
       await smartFundUSD.compoundRedeemByPercent(100, cToken.address)
-      .should.be.fulfilled
+      assert.equal(await DAI.balanceOf(smartFundUSD.address), toWei(String(1)))
     })
 
 

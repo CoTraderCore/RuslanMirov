@@ -133,7 +133,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
     uint8 index = 0;
 
     // get all ERC20 addresses and balance
-    for (uint8 i = 1; i < tokenAddresses.length; i++) {
+    for (uint8 i = 2; i < tokenAddresses.length; i++) {
       fromAddresses[index] = tokenAddresses[i];
       amounts[index] = ERC20(tokenAddresses[i]).balanceOf(address(this));
       index++;
