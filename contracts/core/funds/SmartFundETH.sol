@@ -101,28 +101,20 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
     // Otherwise, we get the value of all the other tokens in ether via exchangePortal
 
     // Calculate value for ERC20
-    // Sub cTokens + ETH
-    uint cTokensAndETHlength = compoundCTokensLength() + 1;
-    address[] memory fromAddresses = new address[](tokenAddresses.length - cTokensAndETHlength);
-    uint256[] memory amounts = new uint256[](tokenAddresses.length - cTokensAndETHlength);
-    uint8 ercIndex = 0;
-
+    address[] memory fromAddresses = new address[](tokenAddresses.length - 1); // Sub ETH
+    uint256[] memory amounts = new uint256[](tokenAddresses.length - 1);
+    uint index = 0;
+    
     for (uint256 i = 1; i < tokenAddresses.length; i++) {
-      // No need for cToken
-      if(!isCTOKEN[tokenAddresses[i]]){
-        fromAddresses[ercIndex] = tokenAddresses[i];
-        amounts[ercIndex] = ERC20(tokenAddresses[i]).balanceOf(address(this));
-        ercIndex++;
-      }
+      fromAddresses[index] = tokenAddresses[i];
+      amounts[index] = ERC20(tokenAddresses[i]).balanceOf(address(this));
+      index++;
     }
     // Ask the Exchange Portal for the value of all the funds tokens in eth
     uint256 tokensValue = exchangePortal.getTotalValue(fromAddresses, amounts, ETH_TOKEN_ADDRESS);
 
-    // get compound c tokens in ETH
-    uint256 compoundCTokensValueInETH = compoundGetAllFundCtokensinETH();
-
-    // Sum ETH + ERC20 + cTokens
-    return ethBalance + tokensValue + compoundCTokensValueInETH;
+    // Sum ETH + ERC20
+    return ethBalance + tokensValue;
   }
 
   /**
@@ -136,10 +128,6 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
     // return ETH
     if (_token == ETH_TOKEN_ADDRESS){
       return address(this).balance;
-    }
-    // return CToken in ETH
-    else if(isCTOKEN[_token]){
-      return compoundGetCTokenValue(_token);
     }
     // return ERC20 in ETH
     else{
