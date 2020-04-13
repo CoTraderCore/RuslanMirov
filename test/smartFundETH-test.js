@@ -835,17 +835,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   })
 
   describe('COMPOUND', function() {
-    it('Correct cEther length', async function() {
-      assert.equal(await cEther.balanceOf(smartFundETH.address), 0)
-      // deposit in fund
-      await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
-      // mint
-      await smartFundETH.compoundMint(toWei(String(0.5)), cEther.address)
-      // mint
-      await smartFundETH.compoundMint(toWei(String(0.5)), cEther.address)
-      assert.equal(await smartFundETH.compoundCTokensLength(), 1)
-    })
-
     it('Fund Manager can mint and reedem CEther', async function() {
       assert.equal(await cEther.balanceOf(smartFundETH.address), 0)
 
@@ -857,6 +846,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // check balance
       assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
       assert.equal(await cEther.balanceOf(smartFundETH.address), toWei(String(1)))
+
+      assert.equal(await web3.eth.getBalance(cEther.address),toWei(String(1)))
 
       // reedem
       await smartFundETH.compoundRedeemByPercent(100, cEther.address)

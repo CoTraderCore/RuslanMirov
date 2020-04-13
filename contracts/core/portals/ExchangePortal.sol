@@ -460,9 +460,9 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     : getPercentFromCTokenBalance(_percent, address(_cToken), msg.sender);
 
     // transfer amount from sender
-    ERC20(cToken).transferFrom(msg.sender, address(this), amount);
+    ERC20(_cToken).transferFrom(msg.sender, address(this), amount);
 
-    // reedem 
+    // reedem
     if(_cToken == address(cEther)){
       // redeem compound ETH
       cEther.redeem(amount);
@@ -692,9 +692,9 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _holder        address of cToken holder
   */
   function getPercentFromCTokenBalance(uint _percent, address _cToken, address _holder)
-  private
-  view
-  returns(uint256)
+   public
+   view
+   returns(uint256)
   {
     if(_percent > 0 && _percent <= 100){
       uint256 currectBalance = ERC20(_cToken).balanceOf(_holder);
@@ -704,6 +704,10 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       // not correct percent
       return 0;
     }
+  }
+
+  function getCTokenUnderlying(address _cToken) public view returns(address){
+    return CToken(_cToken).underlying();
   }
 
   /**

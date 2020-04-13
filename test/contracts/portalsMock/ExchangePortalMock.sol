@@ -188,7 +188,7 @@ contract ExchangePortalMock {
     : getPercentFromCTokenBalance(_percent, address(_cToken), msg.sender);
 
     // transfer amount from sender
-    ERC20(cToken).transferFrom(msg.sender, address(this), amount);
+    ERC20(_cToken).transferFrom(msg.sender, address(this), amount);
 
     // reedem
     if(_cToken == address(cEther)){
@@ -236,6 +236,7 @@ contract ExchangePortalMock {
       address underlyingAddress = cToken.underlying();
       _transferFromSenderAndApproveTo(ERC20(underlyingAddress), _amount, address(_cToken));
       cToken.mint(_amount);
+
       // transfer received cERC back to fund
       receivedAmount = cToken.balanceOf(address(this));
       cToken.transfer(msg.sender, receivedAmount);
@@ -253,7 +254,7 @@ contract ExchangePortalMock {
   * @param _holder        address of cToken holder
   */
   function getPercentFromCTokenBalance(uint _percent, address _cToken, address _holder)
-  private
+  public
   view
   returns(uint256)
   {
@@ -265,6 +266,10 @@ contract ExchangePortalMock {
       // not correct percent
       return 0;
     }
+  }
+
+  function getCTokenUnderlying(address _cToken) public view returns(address){
+    return CToken(_cToken).underlying();
   }
 
   // get the total value of multiple tokens and amounts in one go

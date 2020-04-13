@@ -23,7 +23,6 @@ import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
-
 contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   using SafeMath for uint256;
   using SafeERC20 for ERC20;
@@ -501,6 +500,8 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
         _cToken
       );
     }else{
+      address underlying = exchangePortal.getCTokenUnderlying(_cToken);
+      ERC20(underlying).approve(address(exchangePortal), _amount);
       receivedAmount = exchangePortal.compoundMint(
         _amount,
         _cToken
@@ -518,13 +519,21 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   * @param _cToken       cToken address
   */
   function compoundRedeemByPercent(uint256 _percent, address _cToken) external onlyOwner {
-     uint256 receivedAmount = exchangePortal.compoundRedeemByPercent(
+    uint256 amount = exchangePortal.getPercentFromCTokenBalance(
+      _percent,
+      _cToken,
+      address(this)
+    );
+
+    ERC20(_cToken).approve(address(exchangePortal), amount);
+
+    uint256 receivedAmount = exchangePortal.compoundRedeemByPercent(
        _percent,
        _cToken
-     );
+    );
 
-     if(receivedAmount > 0)
-        _addToken(_cToken);
+    if(receivedAmount > 0)
+      _addToken(_cToken);
   }
 
   /**
