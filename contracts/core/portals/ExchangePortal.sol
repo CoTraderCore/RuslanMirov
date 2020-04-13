@@ -418,12 +418,15 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   function compoundMint(uint256 _amount, address _cToken)
    external
    payable
+   returns(uint256)
   {
+    uint256 receivedAmount = 0;
     if(_cToken == address(cEther)){
       // mint cETH
       cEther.mint.value(_amount)();
       // transfer received cETH back to fund
-      cEther.transfer(msg.sender, cEther.balanceOf(address(this)));
+      receivedAmount = cEther.balanceOf(address(this));
+      cEther.transfer(msg.sender, receivedAmount);
     }else{
       // mint cERC20
       CToken cToken = CToken(_cToken);
@@ -431,8 +434,11 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       _transferFromSenderAndApproveTo(ERC20(underlyingAddress), _amount, address(_cToken));
       cToken.mint(_amount);
       // transfer received cERC back to fund
-      cToken.transfer(msg.sender, cToken.balanceOf(address(this)));
+      receivedAmount = cToken.balanceOf(address(this));
+      cToken.transfer(msg.sender, receivedAmount);
     }
+
+    return receivedAmount;
   }
 
   /**
@@ -441,7 +447,11 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _percent      percent from 1 to 100
   * @param _cToken       cToken address
   */
-  function compoundRedeemByPercent(uint _percent, address _cToken) external {
+  function compoundRedeemByPercent(uint _percent, address _cToken)
+   external
+   returns(uint256)
+  {
+    uint256 receivedAmount = 0;
     uint256 amount = (_percent == 100)
     // if 100 return all
     ? ERC20(address(_cToken)).balanceOf(address(this))
@@ -453,7 +463,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       cEther.transferFrom(msg.sender, address(this), amount);
       cEther.redeem(amount);
       // transfer received ETH back to fund
-      (msg.sender).transfer(address(this).balance);
+      receivedAmount = address(this).balance;
+      (msg.sender).transfer(receivedAmount);
 
     }else{
       // redeem ERC20
@@ -463,8 +474,11 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       // transfer received ERC20 back to fund
       address underlyingAddress = cToken.underlying();
       ERC20 underlying = ERC20(underlyingAddress);
-      underlying.transfer(msg.sender, underlying.balanceOf(address(this)));
+      receivedAmount = underlying.balanceOf(address(this));
+      underlying.transfer(msg.sender, receivedAmount);
     }
+
+    return receivedAmount;
   }
 
 
@@ -574,6 +588,17 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }else{
       value = 0;
     }
+  }
+
+  // helper for get value between Compound assets and ETH/ERC20
+  // NOTE: _from should be COMPOUND cTokens
+  function getValueViaCompound(
+    address _from,
+    address _to,
+    uint256 _amount
+  ) public view returns (uint256 value) {
+    // TODO: implement this
+    return 0;
   }
 
   // helper for get value from Syntetix asset to any asset in DEXs which support sUSD

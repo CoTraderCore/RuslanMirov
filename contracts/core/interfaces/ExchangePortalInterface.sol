@@ -16,6 +16,9 @@ contract ExchangePortalInterface {
     payable
     returns (uint256);
 
+  function compoundRedeemByPercent(uint _percent, address _cToken) external returns(uint256);
+  function compoundMint(uint256 _amount, address _cToken) external payable returns(uint256);
+
   function getValue(address _from, address _to, uint256 _amount) public view returns (uint256);
   function getTotalValue(address[] _fromAddresses, uint256[] _amounts, address _to) public view returns (uint256);
 }

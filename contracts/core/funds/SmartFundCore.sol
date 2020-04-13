@@ -493,11 +493,22 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   * @param _cToken       cToken address
   */
   function compoundMint(uint256 _amount, address _cToken) external onlyOwner{
+    uint256 receivedAmount = 0;
+
     if(_cToken == address(cEther)){
-
+      receivedAmount = exchangePortal.compoundMint.value(_amount)(
+        _amount,
+        _cToken
+      );
     }else{
-
+      receivedAmount = exchangePortal.compoundMint(
+        _amount,
+        _cToken
+      );
     }
+
+    if(receivedAmount > 0)
+       _addToken(_cToken);
   }
 
   /**
@@ -507,7 +518,13 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   * @param _cToken       cToken address
   */
   function compoundRedeemByPercent(uint256 _percent, address _cToken) external onlyOwner {
+     uint256 receivedAmount = exchangePortal.compoundRedeemByPercent(
+       _percent,
+       _cToken
+     );
 
+     if(receivedAmount > 0)
+        _addToken(_cToken);
   }
 
   /**
