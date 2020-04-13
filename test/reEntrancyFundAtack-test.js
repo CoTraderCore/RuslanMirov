@@ -20,8 +20,8 @@ const Token = artifacts.require('./tokens/Token')
 const ExchangePortalMock = artifacts.require('./portalsMock/ExchangePortalMock')
 const PoolPortalMock = artifacts.require('./portalsMock/PoolPortalMock')
 const CoTraderDAOWalletMock = artifacts.require('./portalsMock/CoTraderDAOWalletMock')
-const CToken = artifacts.require('./compoundMock/CTokenMock')
-const CEther = artifacts.require('./compoundMock/CEtherMock')
+const CToken = artifacts.require('./compoundMock/CToken')
+const CEther = artifacts.require('./compoundMock/CEther')
 const ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
 let xxxERC,
@@ -113,7 +113,8 @@ contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
       1,
       DAI.address,
       '0x0000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000'
+      '0x0000000000000000000000000000000000000000',
+      cEther.address
     )
 
     // Depoy poolPortal

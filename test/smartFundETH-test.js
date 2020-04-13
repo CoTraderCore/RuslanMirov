@@ -20,8 +20,8 @@ const Token = artifacts.require('./tokens/Token')
 const ExchangePortalMock = artifacts.require('./portalsMock/ExchangePortalMock')
 const PoolPortalMock = artifacts.require('./portalsMock/PoolPortalMock')
 const CoTraderDAOWalletMock = artifacts.require('./CoTraderDAOWalletMock')
-const CToken = artifacts.require('./compoundMock/CTokenMock')
-const CEther = artifacts.require('./compoundMock/CEtherMock')
+const CToken = artifacts.require('./compoundMock/CToken')
+const CEther = artifacts.require('./compoundMock/CEther')
 const Synthetix = artifacts.require('./synthetixMock/Synthetix')
 const Synth = artifacts.require('./synthetixMock/Synth')
 const ExchangeRates = artifacts.require('./synthetixMock/ExchangeRates')
@@ -157,7 +157,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       1,
       DAI.address,
       synthetix.address,
-      synthetixAddressResolver.address
+      synthetixAddressResolver.address,
+      cEther.address
     )
 
     // Depoy poolPortal

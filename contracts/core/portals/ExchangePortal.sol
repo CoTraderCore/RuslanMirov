@@ -452,15 +452,19 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
    returns(uint256)
   {
     uint256 receivedAmount = 0;
+
     uint256 amount = (_percent == 100)
     // if 100 return all
-    ? ERC20(address(_cToken)).balanceOf(address(this))
+    ? ERC20(address(_cToken)).balanceOf(msg.sender)
     // else calculate percent
-    : getPercentFromCTokenBalance(_percent, address(_cToken));
+    : getPercentFromCTokenBalance(_percent, address(_cToken), msg.sender);
 
+    // transfer amount from sender
+    ERC20(cToken).transferFrom(msg.sender, address(this), amount);
+
+    // reedem 
     if(_cToken == address(cEther)){
       // redeem compound ETH
-      cEther.transferFrom(msg.sender, address(this), amount);
       cEther.redeem(amount);
       // transfer received ETH back to fund
       receivedAmount = address(this).balance;
@@ -469,7 +473,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }else{
       // redeem ERC20
       CToken cToken = CToken(_cToken);
-      cToken.transferFrom(msg.sender, address(this), amount);
       cToken.redeem(amount);
       // transfer received ERC20 back to fund
       address underlyingAddress = cToken.underlying();
@@ -685,20 +688,21 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @dev return percent of compound cToken balance
   *
   * @param _percent       amount of ERC20 or ETH
-  * @param _cToken       cToken address
+  * @param _cToken        cToken address
+  * @param _holder        address of cToken holder
   */
-  function getPercentFromCTokenBalance(uint _percent, address _cToken)
-  public
+  function getPercentFromCTokenBalance(uint _percent, address _cToken, address _holder)
+  private
   view
   returns(uint256)
   {
     if(_percent > 0 && _percent <= 100){
-      uint256 currectBalance = ERC20(_cToken).balanceOf(address(this));
+      uint256 currectBalance = ERC20(_cToken).balanceOf(_holder);
       return currectBalance.div(100).mul(_percent);
     }
     else{
       // not correct percent
-      revert();
+      return 0;
     }
   }
 

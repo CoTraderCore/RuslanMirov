@@ -8,6 +8,9 @@ import "../synthetixMock/ISynthetix.sol";
 import "../synthetixMock/IAddressResolver.sol";
 import "../synthetixMock/IExchangeRates.sol";
 
+import "../compoundMock/CEther.sol";
+import "../compoundMock/CToken.sol";
+
 contract ExchangePortalMock {
 
   using SafeMath for uint256;
@@ -25,6 +28,8 @@ contract ExchangePortalMock {
   address public stableCoinAddress;
   bool public stopTransfer;
 
+  CEther public cEther;
+
   // Enum
   enum ExchangeType { Paraswap, Bancor, OneInch, Synthetix}
 
@@ -35,7 +40,8 @@ contract ExchangePortalMock {
     uint256 _div,
     address _stableCoinAddress,
     address _synthetix,
-    address _synthetixAddressResolver
+    address _synthetixAddressResolver,
+    address _cETH
     )
     public
   {
@@ -44,6 +50,7 @@ contract ExchangePortalMock {
     stableCoinAddress = _stableCoinAddress;
     synthetix = ISynthetix(_synthetix);
     synthetixAddressResolver = IAddressResolver(_synthetixAddressResolver);
+    cEther = CEther(_cETH);
   }
 
   function trade(
@@ -165,6 +172,98 @@ contract ExchangePortalMock {
     // ERC case
     else {
       return _amount;
+    }
+  }
+
+  function compoundRedeemByPercent(uint _percent, address _cToken)
+   external
+   returns(uint256)
+  {
+    uint256 receivedAmount = 0;
+
+    uint256 amount = (_percent == 100)
+    // if 100 return all
+    ? ERC20(address(_cToken)).balanceOf(msg.sender)
+    // else calculate percent
+    : getPercentFromCTokenBalance(_percent, address(_cToken), msg.sender);
+
+    // transfer amount from sender
+    ERC20(cToken).transferFrom(msg.sender, address(this), amount);
+
+    // reedem
+    if(_cToken == address(cEther)){
+      // redeem compound ETH
+      cEther.redeem(amount);
+      // transfer received ETH back to fund
+      receivedAmount = address(this).balance;
+      (msg.sender).transfer(receivedAmount);
+
+    }else{
+      // redeem ERC20
+      CToken cToken = CToken(_cToken);
+      cToken.redeem(amount);
+      // transfer received ERC20 back to fund
+      address underlyingAddress = cToken.underlying();
+      ERC20 underlying = ERC20(underlyingAddress);
+      receivedAmount = underlying.balanceOf(address(this));
+      underlying.transfer(msg.sender, receivedAmount);
+    }
+
+    return receivedAmount;
+  }
+
+  /**
+  * @dev buy Compound cTokens
+  *
+  * @param _amount       amount of ERC20 or ETH
+  * @param _cToken       cToken address
+  */
+  function compoundMint(uint256 _amount, address _cToken)
+   external
+   payable
+   returns(uint256)
+  {
+    uint256 receivedAmount = 0;
+    if(_cToken == address(cEther)){
+      // mint cETH
+      cEther.mint.value(_amount)();
+      // transfer received cETH back to fund
+      receivedAmount = _amount;
+      cEther.transfer(msg.sender, receivedAmount);
+    }else{
+      // mint cERC20
+      CToken cToken = CToken(_cToken);
+      address underlyingAddress = cToken.underlying();
+      _transferFromSenderAndApproveTo(ERC20(underlyingAddress), _amount, address(_cToken));
+      cToken.mint(_amount);
+      // transfer received cERC back to fund
+      receivedAmount = cToken.balanceOf(address(this));
+      cToken.transfer(msg.sender, receivedAmount);
+    }
+
+    return receivedAmount;
+  }
+
+
+  /**
+  * @dev return percent of compound cToken balance
+  *
+  * @param _percent       amount of ERC20 or ETH
+  * @param _cToken        cToken address
+  * @param _holder        address of cToken holder
+  */
+  function getPercentFromCTokenBalance(uint _percent, address _cToken, address _holder)
+  private
+  view
+  returns(uint256)
+  {
+    if(_percent > 0 && _percent <= 100){
+      uint256 currectBalance = ERC20(_cToken).balanceOf(_holder);
+      return currectBalance.div(100).mul(_percent);
+    }
+    else{
+      // not correct percent
+      return 0;
     }
   }
 
