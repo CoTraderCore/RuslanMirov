@@ -26,6 +26,9 @@ import "../../synthetix/ISynth.sol";
 import "../../synthetix/IExchangeRates.sol";
 import "../../synthetix/IAddressResolver.sol";
 
+import "../../compound/CEther.sol";
+import "../../compound/CToken.sol";
+
 import "../interfaces/ExchangePortalInterface.sol";
 import "../interfaces/PermittedStabelsInterface.sol";
 import "../interfaces/PoolPortalInterface.sol";
@@ -35,6 +38,9 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   using SafeMath for uint256;
 
   uint public version = 2;
+
+  // COMPOUND
+  CEther public cEther;
 
   // SYTHETEX
   ISynthetix public synthetix;
@@ -96,7 +102,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _oneInch                address of 1inch OneSplitAudit contract
   * @param _synthetix              address of Synthetix contract
   * @param _addressResolver        address of Synthetix address resolver contract
-  * @param _synthetixUSD           address of sUSD
+  * @param _synthetixUSD           address of Synthetix sUSD
+  * @param _cEther                 address of the COMPOUND cEther
   */
   constructor(
     address _paraswap,
@@ -109,7 +116,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _oneInch,
     address _synthetix,
     address _addressResolver,
-    address _synthetixUSD
+    address _synthetixUSD,
+    address _cEther
     )
     public
     {
@@ -126,6 +134,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     synthetix = ISynthetix(_synthetix);
     synthetixAddressResolver = IAddressResolver(_addressResolver);
     SYNTHETIX_USD = _synthetixUSD;
+    cEther = CEther(_cEther);
   }
 
 
@@ -400,6 +409,65 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   }
 
 
+  /**
+  * @dev buy Compound cTokens
+  *
+  * @param _amount       amount of ERC20 or ETH
+  * @param _cToken       cToken address
+  */
+  function compoundMint(uint256 _amount, address _cToken)
+   external
+   payable
+  {
+    if(_cToken == address(cEther)){
+      // mint cETH
+      cEther.mint.value(_amount)();
+      // transfer received cETH back to fund
+      cEther.transfer(msg.sender, cEther.balanceOf(address(this)));
+    }else{
+      // mint cERC20
+      CToken cToken = CToken(_cToken);
+      address underlyingAddress = cToken.underlying();
+      _transferFromSenderAndApproveTo(ERC20(underlyingAddress), _amount, address(_cToken));
+      cToken.mint(_amount);
+      // transfer received cERC back to fund
+      cToken.transfer(msg.sender, cToken.balanceOf(address(this)));
+    }
+  }
+
+  /**
+  * @dev sell certain percent of Ctokens to Compound
+  *
+  * @param _percent      percent from 1 to 100
+  * @param _cToken       cToken address
+  */
+  function compoundRedeemByPercent(uint _percent, address _cToken) external {
+    uint256 amount = (_percent == 100)
+    // if 100 return all
+    ? ERC20(address(_cToken)).balanceOf(address(this))
+    // else calculate percent
+    : getPercentFromCTokenBalance(_percent, address(_cToken));
+
+    if(_cToken == address(cEther)){
+      // redeem compound ETH
+      cEther.transferFrom(msg.sender, address(this), amount);
+      cEther.redeem(amount);
+      // transfer received ETH back to fund
+      (msg.sender).transfer(address(this).balance);
+
+    }else{
+      // redeem ERC20
+      CToken cToken = CToken(_cToken);
+      cToken.transferFrom(msg.sender, address(this), amount);
+      cToken.redeem(amount);
+      // transfer received ERC20 back to fund
+      address underlyingAddress = cToken.underlying();
+      ERC20 underlying = ERC20(underlyingAddress);
+      underlying.transfer(msg.sender, underlying.balanceOf(address(this)));
+    }
+  }
+
+
   // VIEW Functions
 
   function tokenBalance(ERC20 _token) private view returns (uint256) {
@@ -586,6 +654,42 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     else{
       return getValueViaParaswap(ETH_TOKEN_ADDRESS, _to, totalETH);
     }
+  }
+
+  /**
+  * @dev return percent of compound cToken balance
+  *
+  * @param _percent       amount of ERC20 or ETH
+  * @param _cToken       cToken address
+  */
+  function getPercentFromCTokenBalance(uint _percent, address _cToken)
+  public
+  view
+  returns(uint256)
+  {
+    if(_percent > 0 && _percent <= 100){
+      uint256 currectBalance = ERC20(_cToken).balanceOf(address(this));
+      return currectBalance.div(100).mul(_percent);
+    }
+    else{
+      // not correct percent
+      revert();
+    }
+  }
+
+  /**
+  * @dev get value for cToken in base asset (ERC20 or ETH) ratio for this smart fund address
+  *
+  * @param _cToken       cToken address
+  */
+  function compoundGetCTokenValue(
+    address _cToken
+  )
+    public
+    view
+    returns(uint256 result)
+  {
+    result = CToken(_cToken).balanceOfUnderlying(address(this));
   }
 
   /**

@@ -1,15 +1,15 @@
 pragma solidity ^0.4.24;
 
-import "./SmartFundAdvanced.sol";
+import "./SmartFundCore.sol";
 import "../interfaces/SmartFundUSDInterface.sol";
 import "../interfaces/PermittedStabelsInterface.sol";
 
 
 /*
-  Note: this smart fund smart fund inherits SmartFundAdvanced and make core operations like deposit,
+  Note: this smart fund smart fund inherits SmartFundCore and make core operations like deposit,
   calculate fund value etc in USD
 */
-contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
+contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
   using SafeMath for uint256;
   using SafeERC20 for ERC20;
 
@@ -49,7 +49,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
     address _stableCoinAddress,
     address _cEther
   )
-  SmartFundAdvanced(
+  SmartFundCore(
     _owner,
     _name,
     _successFee,

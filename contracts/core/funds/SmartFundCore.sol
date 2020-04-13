@@ -94,6 +94,9 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   // The earnings the fund manager has already cashed out
   uint256 public fundManagerCashedOut = 0;
 
+  // COMPOUND ETH wrapper address
+  address public cEther;
+
   // how many shares belong to each address
   mapping (address => uint256) public addressToShares;
 
@@ -125,7 +128,8 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     address _exchangePortalAddress,
     address _permittedExchangesAddress,
     address _permittedPoolsAddress,
-    address _poolPortalAddress
+    address _poolPortalAddress,
+    address _cEther
   )public{
     // never allow a 100% fee
     require(_successFee < TOTAL_PERCENTAGE);
@@ -157,6 +161,9 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     permittedExchanges = PermittedExchangesInterface(_permittedExchangesAddress);
     permittedPools = PermittedPoolsInterface(_permittedPoolsAddress);
     poolPortal = PoolPortalInterface(_poolPortalAddress);
+
+
+    cEther = _cEther;
 
     emit SmartFundCreated(owner);
   }
@@ -479,7 +486,29 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     tokenAddresses.length--;
   }
 
+  /**
+  * @dev buy Compound cTokens
+  *
+  * @param _amount       amount of ERC20 or ETH
+  * @param _cToken       cToken address
+  */
+  function compoundMint(uint256 _amount, address _cToken) external onlyOwner{
+    if(_cToken == address(cEther)){
 
+    }else{
+
+    }
+  }
+
+  /**
+  * @dev sell certain percent of Ctokens to Compound
+  *
+  * @param _percent      percent from 1 to 100
+  * @param _cToken       cToken address
+  */
+  function compoundRedeemByPercent(uint256 _percent, address _cToken) external onlyOwner {
+
+  }
 
   /**
   * @dev mark ERC20 as relay

@@ -14,4 +14,5 @@ contract CEther{
     function exchangeRateCurrent() external view returns (uint);
     function totalSupply() external view returns (uint);
     function balanceOfUnderlying(address account) external view returns (uint);
+    function balanceOf(address account) external view returns (uint);
 }
