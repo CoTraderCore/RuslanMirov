@@ -17,6 +17,7 @@ import "../../bancor/interfaces/IBancorFormula.sol";
 import "../../uniswap/interfaces/UniswapExchangeInterface.sol";
 import "../../uniswap/interfaces/UniswapFactoryInterface.sol";
 
+import "../interfaces/ITokensTypeStorage.sol";
 
 contract PoolPortal {
   using SafeMath for uint256;
@@ -32,19 +33,24 @@ contract PoolPortal {
 
   enum PortalType { Bancor, Uniswap }
 
+  // Contract for handle tokens types
+  ITokensTypeStorage public tokensTypes;
+
   /**
   * @dev contructor
   *
   * @param _bancorRegistryWrapper  address of GetBancorAddressFromRegistry
-  * @param _bancorRatio  address of GetRatioForBancorAssets
-  * @param _bancorEtherToken  address of Bancor ETH wrapper
-  * @param _uniswapFactory  address of Uniswap factory contract
+  * @param _bancorRatio            address of GetRatioForBancorAssets
+  * @param _bancorEtherToken       address of Bancor ETH wrapper
+  * @param _uniswapFactory         address of Uniswap factory contract
+  * @param _tokensTypes            address of the ITokensTypeStorage
   */
   constructor(
     address _bancorRegistryWrapper,
     address _bancorRatio,
     address _bancorEtherToken,
-    address _uniswapFactory
+    address _uniswapFactory,
+    address _tokensTypes
 
   )
   public
@@ -53,6 +59,7 @@ contract PoolPortal {
     bancorRatio = IGetRatioForBancorAssets(_bancorRatio);
     BancorEtherToken = _bancorEtherToken;
     uniswapFactory = UniswapFactoryInterface(_uniswapFactory);
+    tokensTypes = ITokensTypeStorage(_tokensTypes);
   }
 
 
@@ -123,6 +130,8 @@ contract PoolPortal {
     uint256 ercRemains = ercConnector.balanceOf(address(this));
     if(ercRemains > 0)
         ercConnector.transfer(msg.sender, ercRemains);
+
+    setTokenType(_poolToken, "BANCOR POOL");
   }
 
 
@@ -160,6 +169,8 @@ contract PoolPortal {
       uint256 remainsERC = ERC20(tokenAddress).balanceOf(address(this));
       if(remainsERC > 0)
           ERC20(tokenAddress).transfer(msg.sender, remainsERC);
+
+      setTokenType(_poolToken, "UNISWAP POOL");
     }else{
       // throw if such pool not Exist in Uniswap network
       revert();
@@ -408,6 +419,15 @@ contract PoolPortal {
     require(_source.transferFrom(msg.sender, address(this), _sourceAmount));
 
     _source.approve(_to, _sourceAmount);
+  }
+
+  // Pool portal can mark each pool token as UNISWAP or BANCOR
+  function setTokenType(address _token, string _type) private {
+    // no need add type, if token alredy registred
+    if(tokensTypes.isRegistred(_token))
+      return;
+
+    tokensTypes.addNewTokenType(_token,  _type);
   }
 
   // fallback payable function to receive ether from other contract addresses

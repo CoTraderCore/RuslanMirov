@@ -2,6 +2,7 @@ pragma solidity ^0.4.24;
 
 import "../../../contracts/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../../../contracts/core/interfaces/ITokensTypeStorage.sol";
 
 import "../synthetixMock/ISynth.sol";
 import "../synthetixMock/ISynthetix.sol";
@@ -14,11 +15,13 @@ import "../compoundMock/CToken.sol";
 contract ExchangePortalMock {
 
   using SafeMath for uint256;
+  ITokensTypeStorage public tokensTypes;
+
   // Synthetix
   ISynthetix public synthetix;
   IAddressResolver public synthetixAddressResolver;
 
-  // KyberExchange recognizes ETH by this address, airswap recognizes ETH as address(0x0)
+  // This contract recognizes ETH by this address, airswap recognizes ETH as address(0x0)
   ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
   address constant private NULL_ADDRESS = address(0);
   // multiplyer and divider are used to set prices. X ether = X*(mul/div) token,
@@ -41,7 +44,8 @@ contract ExchangePortalMock {
     address _stableCoinAddress,
     address _synthetix,
     address _synthetixAddressResolver,
-    address _cETH
+    address _cETH,
+    address _tokensTypes
     )
     public
   {
@@ -51,6 +55,7 @@ contract ExchangePortalMock {
     synthetix = ISynthetix(_synthetix);
     synthetixAddressResolver = IAddressResolver(_synthetixAddressResolver);
     cEther = CEther(_cETH);
+    tokensTypes = ITokensTypeStorage(_tokensTypes);
   }
 
   function trade(
@@ -129,6 +134,8 @@ contract ExchangePortalMock {
     }else{
       receivedAmount = 0;
     }
+
+    setTokenType(_destination, "CRYPTOCURRENCY");
   }
 
   // Mock for trade via Synthetix
@@ -149,6 +156,8 @@ contract ExchangePortalMock {
     ISynth to = ISynth(destinationToken);
 
     returnAmount = synthetix.exchange(from.currencyKey(), sourceAmount, to.currencyKey());
+
+    setTokenType(destinationToken, "SYNTHETIX");
   }
 
   // Possibilities:
@@ -242,6 +251,8 @@ contract ExchangePortalMock {
       cToken.transfer(msg.sender, receivedAmount);
     }
 
+    setTokenType(_cToken, "COMPOUND");
+
     return receivedAmount;
   }
 
@@ -315,6 +326,15 @@ contract ExchangePortalMock {
 
   function changeStopTransferStatus(bool _status) public {
     stopTransfer = _status;
+  }
+
+
+  function setTokenType(address _token, string _type) private {
+    // no need add type, if token alredy registred
+    if(tokensTypes.isRegistred(_token))
+      return;
+
+    tokensTypes.addNewTokenType(_token,  _type);
   }
 
   function pay() public payable {}

@@ -12,10 +12,10 @@ pragma solidity ^0.4.24;
 import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract TokensTypeStorage is Ownable {
-  // checkl if token alredy registred
+  // check if token alredy registred
   mapping(address => bool) public isRegistred;
   // tokens types
-  mapping(address => string) public getType;
+  mapping(address => bytes32) public getType;
   // addresses which can write to this contract
   mapping(address => bool) public isPermittedAddress;
 
@@ -23,12 +23,12 @@ contract TokensTypeStorage is Ownable {
   string[] public allTypes;
 
   modifier onlyPermitted() {
-    require(isPermittedAddress[msg.sender]);
+    require(isPermittedAddress[msg.sender], "Sender not have permition for edit this contract");
     _;
   }
 
   function addNewTokenType(address _token, string _type) public onlyPermitted {
-    getType[_token] = _type;
+    getType[_token] = stringToBytes32(_type);
     isRegistred[_token] = true;
     allTypes.push(_type);
   }
@@ -40,4 +40,16 @@ contract TokensTypeStorage is Ownable {
   function removePermittedAddress(address _permitted) public onlyOwner {
     isPermittedAddress[_permitted] = false;
   }
+
+  // helper for convert dynamic string size to fixed bytes32 size
+  function stringToBytes32(string memory source) private pure returns (bytes32 result) {
+    bytes memory tempEmptyStringTest = bytes(source);
+    if (tempEmptyStringTest.length == 0) {
+        return 0x0;
+    }
+
+    assembly {
+        result := mload(add(source, 32))
+    }
+   }
 }

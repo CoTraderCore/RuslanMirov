@@ -13,16 +13,21 @@ require('chai')
   .use(require('chai-bignumber')(BigNumber))
   .should()
 
+const ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+// real contracts
+const SmartFundETH = artifacts.require('./core/funds/SmartFundETH.sol')
+const TokensTypeStorage = artifacts.require('./core/storage/TokensTypeStorage.sol')
+
+// mock contracts
 const ReEntrancyFundAtack = artifacts.require('./ReEntrancyFundAtack')
 const ReEntrancyFundAtackAsManager = artifacts.require('./ReEntrancyFundAtackAsManager')
-const SmartFundETH = artifacts.require('./core/funds/SmartFundETH.sol')
 const Token = artifacts.require('./tokens/Token')
 const ExchangePortalMock = artifacts.require('./portalsMock/ExchangePortalMock')
 const PoolPortalMock = artifacts.require('./portalsMock/PoolPortalMock')
 const CoTraderDAOWalletMock = artifacts.require('./portalsMock/CoTraderDAOWalletMock')
 const CToken = artifacts.require('./compoundMock/CToken')
 const CEther = artifacts.require('./compoundMock/CEther')
-const ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+
 
 let xxxERC,
     DAI,
@@ -37,7 +42,8 @@ let xxxERC,
     COT_DAO_WALLET,
     yyyERC,
     atackContract,
-    atackContractAsManager
+    atackContractAsManager,
+    tokensType
 
 contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
 
@@ -107,6 +113,9 @@ contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
       toWei(String(100000000))
     )
 
+    // Deploy tokens type storage
+    tokensType = await TokensTypeStorage.new()
+
     // Deploy exchangePortal
     exchangePortal = await ExchangePortalMock.new(
       1,
@@ -114,11 +123,22 @@ contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
       DAI.address,
       '0x0000000000000000000000000000000000000000',
       '0x0000000000000000000000000000000000000000',
-      cEther.address
+      cEther.address,
+      tokensType.address
     )
 
     // Depoy poolPortal
-    poolPortal = await PoolPortalMock.new(BNT.address, DAI.address, DAIBNT.address, DAIUNI.address)
+    poolPortal = await PoolPortalMock.new(
+      BNT.address,
+      DAI.address,
+      DAIBNT.address,
+      DAIUNI.address,
+      tokensType.address
+    )
+
+    // allow exchange portal and pool portal write to token type storage
+    await tokensType.addNewPermittedAddress(exchangePortal.address)
+    await tokensType.addNewPermittedAddress(poolPortal.address)
 
     // Deploy ETH fund
     smartFundETH = await SmartFundETH.new(
@@ -180,6 +200,8 @@ contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
 
       // check fund balance
       assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(1)))
+
+      assert.equal(await tokensType.isPermittedAddress(exchangePortal.address), true)
 
       // Manager make profit
       await smartFundETH.trade(

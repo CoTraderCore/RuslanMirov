@@ -14,8 +14,11 @@ require('chai')
   .should()
 
 const ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
-
+// real contracts
 const SmartFundETH = artifacts.require('./core/funds/SmartFundETH.sol')
+const TokensTypeStorage = artifacts.require('./core/storage/TokensTypeStorage.sol')
+
+// mock
 const Token = artifacts.require('./tokens/Token')
 const ExchangePortalMock = artifacts.require('./portalsMock/ExchangePortalMock')
 const PoolPortalMock = artifacts.require('./portalsMock/PoolPortalMock')
@@ -44,7 +47,8 @@ let xxxERC,
     sUSD,
     synthetix,
     synthetixRates,
-    synthetixAddressResolver
+    synthetixAddressResolver,
+    tokensType
 
 
 
@@ -150,6 +154,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     await synthetixAddressResolver.addAddress('sUSD', sUSD.address)
     await synthetixAddressResolver.addAddress('ExchangeRates', synthetixRates.address)
 
+    // Deploy tokens type storage
+    tokensType = await TokensTypeStorage.new()
 
     // Deploy exchangePortal
     exchangePortal = await ExchangePortalMock.new(
@@ -158,11 +164,22 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       DAI.address,
       synthetix.address,
       synthetixAddressResolver.address,
-      cEther.address
+      cEther.address,
+      tokensType.address
     )
 
     // Depoy poolPortal
-    poolPortal = await PoolPortalMock.new(BNT.address, DAI.address, DAIBNT.address, DAIUNI.address)
+    poolPortal = await PoolPortalMock.new(
+      BNT.address,
+      DAI.address,
+      DAIBNT.address,
+      DAIUNI.address,
+      tokensType.address
+    )
+
+    // allow exchange portal and pool portal write to token type storage
+    await tokensType.addNewPermittedAddress(exchangePortal.address)
+    await tokensType.addNewPermittedAddress(poolPortal.address)
 
     // Deploy ETH fund
     smartFundETH = await SmartFundETH.new(

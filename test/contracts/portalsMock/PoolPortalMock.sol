@@ -1,12 +1,16 @@
 // This contract sell/buy UNI and BNT Pool relays for DAI mock token
 pragma solidity ^0.4.24;
 
+import "../../../contracts/core/interfaces/ITokensTypeStorage.sol";
 import "../../../contracts/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+
 
 contract PoolPortalMock {
 
   using SafeMath for uint256;
+
+  ITokensTypeStorage public tokensTypes;
 
   address public DAI;
   address public BNT;
@@ -23,13 +27,16 @@ contract PoolPortalMock {
     address _BNT,
     address _DAI,
     address _DAIBNTPoolToken,
-    address _DAIUNIPoolToken)
+    address _DAIUNIPoolToken,
+    address _tokensTypes
+  )
     public
   {
     DAI = _DAI;
     BNT = _BNT;
     DAIBNTPoolToken = _DAIBNTPoolToken;
     DAIUNIPoolToken = _DAIUNIPoolToken;
+    tokensTypes = ITokensTypeStorage(_tokensTypes);
   }
 
 
@@ -41,12 +48,16 @@ contract PoolPortalMock {
      require(ERC20(DAI).transferFrom(msg.sender, address(this), relayAmount));
 
      ERC20(DAIBNTPoolToken).transfer(msg.sender, _amount);
+
+     setTokenType(_poolToken, "BANCOR POOL");
   }
 
   // for mock 1 UNI = 0.5 ETH and 0.5 ERC
   function buyUniswapPool(address _poolToken, uint256 _ethAmount) private {
     require(ERC20(DAI).transferFrom(msg.sender, address(this), _ethAmount));
     ERC20(DAIUNIPoolToken).transfer(msg.sender, _ethAmount.mul(2));
+
+    setTokenType(_poolToken, "UNISWAP POOL");
   }
 
 
@@ -144,6 +155,14 @@ contract PoolPortalMock {
     address(msg.sender).transfer(_amount.div(2));
   }
 
+  // Pool portal can mark each pool token as UNISWAP or BANCOR
+  function setTokenType(address _token, string _type) private {
+    // no need add type, if token alredy registred
+    if(tokensTypes.isRegistred(_token))
+      return;
+
+    tokensTypes.addNewTokenType(_token,  _type);
+  }
 
   function pay() public payable {}
 

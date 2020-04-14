@@ -5,7 +5,7 @@ pragma solidity ^0.4.24;
   Also Borrow and Reedem via Compound
 
   Also this contract allow get ratio between crypto curency assets
-  Also get ratio for Bancor and Uniswap pools, Syntetix and Compound assets 
+  Also get ratio for Bancor and Uniswap pools, Syntetix and Compound assets
 */
 
 import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -34,11 +34,16 @@ import "../interfaces/ExchangePortalInterface.sol";
 import "../interfaces/PermittedStabelsInterface.sol";
 import "../interfaces/PoolPortalInterface.sol";
 
+import "../interfaces/ITokensTypeStorage.sol";
+
 
 contract ExchangePortal is ExchangePortalInterface, Ownable {
   using SafeMath for uint256;
 
   uint public version = 2;
+
+  // Contract for handle tokens types
+  ITokensTypeStorage public tokensTypes;
 
   // COMPOUND
   CEther public cEther;
@@ -67,7 +72,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   PermittedStabelsInterface public permitedStable;
 
   // Enum
-  enum ExchangeType { Paraswap, Bancor, OneInch, Synthetix}
+  enum ExchangeType { Paraswap, Bancor, OneInch, Synthetix }
 
   // This contract recognizes ETH by this address
   ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
@@ -79,7 +84,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
      uint256 srcAmount,
      address dest,
      uint256 destReceived,
-     uint8 exchangeType);
+     uint8 exchangeType
+  );
 
   // black list for non trade able tokens
   mapping (address => bool) disabledTokens;
@@ -105,6 +111,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _addressResolver        address of Synthetix address resolver contract
   * @param _synthetixUSD           address of Synthetix sUSD
   * @param _cEther                 address of the COMPOUND cEther
+  * @param _tokensTypes            address of the ITokensTypeStorage
   */
   constructor(
     address _paraswap,
@@ -118,10 +125,11 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _synthetix,
     address _addressResolver,
     address _synthetixUSD,
-    address _cEther
+    address _cEther,
+    address _tokensTypes
     )
     public
-    {
+  {
     paraswap = _paraswap;
     paraswapInterface = ParaswapInterface(_paraswap);
     priceFeedInterface = IPriceFeed(_paraswapPrice);
@@ -136,6 +144,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     synthetixAddressResolver = IAddressResolver(_addressResolver);
     SYNTHETIX_USD = _synthetixUSD;
     cEther = CEther(_cEther);
+    tokensTypes = ITokensTypeStorage(_tokensTypes);
   }
 
 
@@ -292,6 +301,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
    }
 
    destinationReceived = tokenBalance(ERC20(destinationToken));
+   setTokenType(destinationToken, "CRYPTOCURRENCY");
  }
 
  // Facilitates trade with 1inch
@@ -332,6 +342,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
 
     destinationReceived = tokenBalance(ERC20(destinationToken));
+    setTokenType(destinationToken, "CRYPTOCURRENCY");
  }
 
 
@@ -393,6 +404,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
    ISynth to = ISynth(destinationToken);
 
    returnAmount = synthetix.exchange(from.currencyKey(), sourceAmount, to.currencyKey());
+   setTokenType(destinationToken, "SYNTHETIX");
  }
 
 
@@ -439,6 +451,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       cToken.transfer(msg.sender, receivedAmount);
     }
 
+    setTokenType(_cToken, "COMPOUND");
     return receivedAmount;
   }
 
@@ -484,7 +497,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
 
     return receivedAmount;
   }
-
 
   // VIEW Functions
 
@@ -773,6 +785,15 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   // owner can change oneInch
   function setNewOneInch(address _oneInch) external onlyOwner {
     oneInch = IOneSplitAudit(_oneInch);
+  }
+
+  // Exchange portal can mark each token
+  function setTokenType(address _token, string _type) private {
+    // no need add type, if token alredy registred
+    if(tokensTypes.isRegistred(_token))
+      return;
+
+    tokensTypes.addNewTokenType(_token,  _type);
   }
 
   // fallback payable function to receive ether from other contract addresses
