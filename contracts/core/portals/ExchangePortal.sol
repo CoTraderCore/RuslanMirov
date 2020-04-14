@@ -613,8 +613,15 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _to,
     uint256 _amount
   ) public view returns (uint256 value) {
-    // TODO: implement this
-    return 0;
+    // get underlying amount
+    uint256 rate = CToken(_from).exchangeRateCurrent();
+    uint256 underlyingAmount = _amount.mul(rate).div(1e18);
+    // get underlying address
+    address underlyingAddress = (_from == address(cEther))
+    ? ETH_TOKEN_ADDRESS
+    : CToken(_from).underlying();
+    // get rate for underlying
+    return getValueViaParaswap(underlyingAddress, _to, underlyingAmount);
   }
 
   // helper for get value from Syntetix asset to any asset in DEXs which support sUSD
