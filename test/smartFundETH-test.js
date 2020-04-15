@@ -1,4 +1,4 @@
-import { BN, fromWei, toWei, fromAscii } from 'web3-utils'
+import { BN, fromWei, toWei } from 'web3-utils'
 
 import ether from './helpers/ether'
 import EVMRevert from './helpers/EVMRevert'
@@ -38,7 +38,7 @@ const TOKEN_KEY_BANCOR_POOL = "0x42414e434f5220504f4f4c0000000000000000000000000
 const TOKEN_KEY_UNISWAP_POOL = "0x554e495357415020504f4f4c0000000000000000000000000000000000000000"
 const TOKEN_KEY_SYNTHETIX = "0x53594e5448455449580000000000000000000000000000000000000000000000"
 
-
+// Contracts instance
 let xxxERC,
     DAI,
     exchangePortal,
@@ -429,8 +429,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
           }
         )
 
-        assert.equal(await tokensType.getType(xxxERC.address), TOKEN_KEY_CRYPTOCURRENCY)
-
         assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
 
         // 1 token is now worth 2 ether
@@ -722,7 +720,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   })
 
 
-  describe('Min return', function() {
+  describe('Min return and CRYPTOCURRENCY Key', function() {
     it('Not allow execude transaction trade if for some reason DEX not sent min return asset', async function() {
       // deploy smartFund with 10% success fee
       await deployContracts(1000, 0)
@@ -775,6 +773,9 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
           from: userOne,
         }
       )
+
+      // After trade via aggregatos recieved asset should be marked as CRYPTOCURRENCY
+      assert.equal(await tokensType.getType(xxxERC.address), TOKEN_KEY_CRYPTOCURRENCY)
 
       // 1 token is now worth 2 ether, the fund managers cut is now 0.1 ether
       await exchangePortal.setRatio(1, 2)
@@ -869,7 +870,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
       // mint
       await smartFundETH.compoundMint(toWei(String(1)), cEther.address)
-
+      // after mint recieved assets should be marked as COMPOUND
       assert.equal(await tokensType.getType(cEther.address), TOKEN_KEY_COMPOUND)
 
       // check balance
@@ -1121,7 +1122,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
       // buy BNT pool
       await smartFundETH.buyPool(toWei(String(2)), 0, DAIBNT.address)
-
+      // after buy BNT pool recieved asset should be marked as BANCOR POOL
       assert.equal(await tokensType.getType(DAIBNT.address), TOKEN_KEY_BANCOR_POOL)
 
       // Check balance after buy pool
@@ -1165,7 +1166,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
       // Buy UNI Pool
       await smartFundETH.buyPool(toWei(String(1)), 1, DAIUNI.address)
-
+      // After buy UNI pool recieved asset should be marked as UNI POOL
       assert.equal(await tokensType.getType(DAIUNI.address), TOKEN_KEY_UNISWAP_POOL)
 
       // Check balance after buy pool
@@ -1483,18 +1484,17 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     it('Should be able trade via syntetix', async function() {
       // deploy smartFund with 10% success fee
       await deployContracts(1000, 0)
-      // give exchange portal contract 1 syntetix ETH
-      await sETH.transfer(exchangePortal.address, toWei(String(1)))
+      // give exchange portal contract 1 syntetix USD
+      await sUSD.transfer(exchangePortal.address, toWei(String(1)))
       // deposit in fund
       await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
 
-      // change ETH to sETH via type 0 (Paraswap)
-      // if sETH can be trade on some DEX we mark sETH as CRYPTOCURRENCY
-      // for get best price via DEX aggregator
+      // change ETH to sUSD via type 0 (Paraswap)
+      // sUSD can be trade as CRYPTOCURRENCY
       await smartFundETH.trade(
         ETH_TOKEN_ADDRESS,
         toWei(String(1)),
-        sETH.address,
+        sUSD.address,
         0,
         [],
         "0x",
@@ -1504,15 +1504,15 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         }
       )
 
-      // check smart fund received sETH and send ETH
-      assert.equal(await sETH.balanceOf(smartFundETH.address), toWei(String(1)))
+      // check smart fund received sUSD and send ETH
+      assert.equal(await sUSD.balanceOf(smartFundETH.address), toWei(String(1)))
       assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
 
-      // change sETH to some SYNTHETIX asset (sUSD for this case) via Synthetix (type 3)
+      // change sUSD to some SYNTHETIX asset (sETH for this case) via Synthetix (type 3)
       await smartFundETH.trade(
-        sETH.address,
-        toWei(String(1)),
         sUSD.address,
+        toWei(String(1)),
+        sETH.address,
         3,
         [],
         "0x",
@@ -1522,12 +1522,12 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         }
       )
 
-      // Mark some Syntetix asset as Syntetix
-      assert.equal(await tokensType.getType(sUSD.address), TOKEN_KEY_SYNTHETIX)
+      // Check Key after trade via Syntetix, recieved assets should be marked as SYNTHETIX
+      assert.equal(await tokensType.getType(sETH.address), TOKEN_KEY_SYNTHETIX)
 
-      // check smart fund received sUSD and send sETH
-      assert.equal(await sETH.balanceOf(smartFundETH.address), 0)
-      assert.equal(await sUSD.balanceOf(smartFundETH.address), toWei(String(1)))
+      // check smart fund received sETH and send sUSD
+      assert.equal(await sUSD.balanceOf(smartFundETH.address), 0)
+      assert.equal(await sETH.balanceOf(smartFundETH.address), toWei(String(1)))
     })
   })
   //END

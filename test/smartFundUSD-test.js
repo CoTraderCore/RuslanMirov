@@ -30,7 +30,14 @@ const Synth = artifacts.require('./synthetixMock/Synth')
 const ExchangeRates = artifacts.require('./synthetixMock/ExchangeRates')
 const AddressResolver = artifacts.require('./synthetixMock/AddressResolver')
 
+// Tokens keys converted in bytes32
+const TOKEN_KEY_CRYPTOCURRENCY = "0x43525950544f43555252454e4359000000000000000000000000000000000000"
+const TOKEN_KEY_COMPOUND = "0x434f4d504f554e44000000000000000000000000000000000000000000000000"
+const TOKEN_KEY_BANCOR_POOL = "0x42414e434f5220504f4f4c000000000000000000000000000000000000000000"
+const TOKEN_KEY_UNISWAP_POOL = "0x554e495357415020504f4f4c0000000000000000000000000000000000000000"
+const TOKEN_KEY_SYNTHETIX = "0x53594e5448455449580000000000000000000000000000000000000000000000"
 
+// Contracts instance
 let xxxERC,
     DAI,
     exchangePortal,
@@ -887,7 +894,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     })
   })
 
-  describe('Min return', function() {
+  describe('Min return and CRYPTOCURRENCY key', function() {
     it('Not allow execude transaction trade if for some reason DEX not sent min return asset', async function() {
       // deploy smartFund with 10% success fee
       await deployContracts(1000, 0)
@@ -939,9 +946,13 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
           from: userOne,
         }
       )
-
       // mint
       await smartFundUSD.compoundMint(toWei(String(1)), cEther.address)
+      // check key after trade
+      assert.equal(await tokensType.getType(cEther.address), TOKEN_KEY_COMPOUND)
+
+      // Check key Compound mint
+      assert.equal(await tokensType.getType(cEther.address), TOKEN_KEY_COMPOUND)
 
       // check balance
       assert.equal(await web3.eth.getBalance(smartFundUSD.address), 0)
@@ -1170,6 +1181,9 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       // buy BNT pool
       await smartFundUSD.buyPool(toWei(String(2)), 0, DAIBNT.address)
 
+      // check key after buy Bancor pools
+      assert.equal(await tokensType.getType(DAIBNT.address), TOKEN_KEY_BANCOR_POOL)
+
       // Check balance after buy pool
       assert.equal(await BNT.balanceOf(smartFundUSD.address), 0)
       assert.equal(await DAI.balanceOf(smartFundUSD.address), 0)
@@ -1212,6 +1226,9 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
 
       // Buy UNI Pool
       await smartFundUSD.buyPool(toWei(String(1)), 1, DAIUNI.address)
+
+      // Check key after buy UNI pool
+      assert.equal(await tokensType.getType(DAIUNI.address), TOKEN_KEY_UNISWAP_POOL)
 
       // Check balance after buy pool
       assert.equal(await DAI.balanceOf(smartFundUSD.address), toWei(String(0)))
@@ -1556,7 +1573,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
       await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
 
-      // change ETH to sETH via type 0 (Paraswap)
+      // change ETH to sETH via dex aggregator type 0 (Paraswap)
       await smartFundUSD.trade(
         DAI.address,
         toWei(String(1)),
@@ -1573,7 +1590,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       assert.equal(await sUSD.balanceOf(smartFundUSD.address), toWei(String(1)))
       assert.equal(await DAI.balanceOf(smartFundUSD.address), 0)
 
-      // change sETH to sUSD via Synthetix (type 3)
+      // change sETH to some syntetix asset (sUSD) via Synthetix (type 3)
       await smartFundUSD.trade(
         sUSD.address,
         toWei(String(1)),
@@ -1586,6 +1603,10 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
           from: userOne,
         }
       )
+
+      // Check Key after trade via Syntetix, recieved assets should be marked as SYNTHETIX
+      assert.equal(await tokensType.getType(sETH.address), TOKEN_KEY_SYNTHETIX)
+
       // check smart fund received sUSD and send sETH
       assert.equal(await sUSD.balanceOf(smartFundUSD.address), 0)
       assert.equal(await sETH.balanceOf(smartFundUSD.address), toWei(String(1)))
