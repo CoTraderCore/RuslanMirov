@@ -184,6 +184,7 @@ contract ExchangePortalMock {
     }
   }
 
+  // for mock 1 cETH = 1 ETH, 1 cERC20 = 1 ERC20
   function compoundRedeemByPercent(uint _percent, address _cToken)
    external
    returns(uint256)
@@ -204,8 +205,8 @@ contract ExchangePortalMock {
       // redeem compound ETH
       cEther.redeem(amount);
       // transfer received ETH back to fund
-      receivedAmount = address(this).balance;
-      (msg.sender).transfer(receivedAmount);
+      receivedAmount = amount;
+      (msg.sender).transfer(amount);
 
     }else{
       // redeem ERC20
@@ -214,8 +215,8 @@ contract ExchangePortalMock {
       // transfer received ERC20 back to fund
       address underlyingAddress = cToken.underlying();
       ERC20 underlying = ERC20(underlyingAddress);
-      receivedAmount = underlying.balanceOf(address(this));
-      underlying.transfer(msg.sender, receivedAmount);
+      receivedAmount = amount;
+      underlying.transfer(msg.sender, amount);
     }
 
     return receivedAmount;
