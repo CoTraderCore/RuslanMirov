@@ -71,6 +71,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   PermittedStabelsInterface public permitedStable;
 
   // Enum
+  // NOTE: You can add a new type at the end, but do not change this order
   enum ExchangeType { Paraswap, Bancor, OneInch, Synthetix }
 
   // This contract recognizes ETH by this address

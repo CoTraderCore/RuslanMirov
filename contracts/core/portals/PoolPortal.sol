@@ -31,6 +31,8 @@ contract PoolPortal {
   // CoTrader platform recognize ETH by this address
   ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
+  // Enum
+  // NOTE: You can add a new type at the end, but do not change this order
   enum PortalType { Bancor, Uniswap }
 
   // Contract for handle tokens types
