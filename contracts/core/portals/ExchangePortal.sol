@@ -507,7 +507,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   }
 
   /**
-  * @dev Gets the ratio by amount of token _from in token _to
+  * @dev Gets the ratio by amount of token _from in token _to by totekn type
   *
   * @param _from      Address of token we're converting from
   * @param _to        Address of token we're getting the value in
@@ -515,7 +515,41 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   *
   * @return best price from Paraswap or 1inch for ERC20, or ratio for Uniswap and Bancor pools
   */
-  function getValue(address _from, address _to, uint256 _amount) public view returns (uint256) {
+  function getValue(address _from, address _to, uint256 _amount) public view returns (uint256){
+    if(tokensTypes.getType(_from) == bytes32("CRYPTOCURRENCY")){
+      uint256 valueFromOneInch = getValueViaOneInch(_from, _to, _amount);
+      uint256 valueFromParaswap = getValueViaParaswap(_from, _to, _amount);
+      // return best price 
+      return (valueFromOneInch > valueFromParaswap) ? valueFromOneInch : valueFromParaswap;
+    }
+    else if (tokensTypes.getType(_from) == bytes32("BANCOR POOL")){
+      return getValueViaBancor(_from, _to, _amount);
+    }
+    else if (tokensTypes.getType(_from) == bytes32("UNISWAP POOL")){
+      return getValueForUniswapPools(_from, _to, _amount);
+    }
+    else if (tokensTypes.getType(_from) == bytes32("COMPOUND")){
+      return getValueViaCompound(_from, _to, _amount);
+    }
+    else if(tokensTypes.getType(_from) == bytes32("SYNTHETIX")){
+      return getValueViaSynthetix(_from, _to, _amount);
+    }
+    else{
+      // Unmarked type, try find value
+      return findValue(_from, _to, _amount);
+    }
+  }
+
+  /**
+  * @dev find the ratio by amount of token _from in token _to trying all available methods
+  *
+  * @param _from      Address of token we're converting from
+  * @param _to        Address of token we're getting the value in
+  * @param _amount    The amount of _from
+  *
+  * @return best price from Paraswap or 1inch for ERC20, or ratio for Uniswap and Bancor pools
+  */
+  function findValue(address _from, address _to, uint256 _amount) public view returns (uint256) {
      if(_amount > 0){
        // If Paraswap return 0, check from 1inch for ensure
        uint256 paraswapResult = getValueViaParaswap(_from, _to, _amount);
@@ -532,10 +566,15 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
        if(bancorResult > 0)
           return bancorResult;
 
-       // If Syntetix return 0, check from Uniswap pools for ensure this is not Uniswap pool
+       // If Syntetix return 0, check from Compound for ensure this is not Compound asset
        uint256 synthetixResult = getValueViaSynthetix(_from, _to, _amount);
        if(synthetixResult > 0)
           return synthetixResult;
+
+       // If Compound return 0, check from Uniswap pools for ensure this is not Uniswap
+       uint256 compoundResult = getValueViaCompound(_from, _to, _amount);
+       if(compoundResult > 0)
+          return compoundResult;
 
        // Uniswap pools return 0 if these is not a Uniswap pool
        return getValueForUniswapPools(_from, _to, _amount);
@@ -613,15 +652,23 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _to,
     uint256 _amount
   ) public view returns (uint256 value) {
-    // get underlying amount
-    uint256 rate = CToken(_from).exchangeRateCurrent();
-    uint256 underlyingAmount = _amount.mul(rate).div(1e18);
-    // get underlying address
-    address underlyingAddress = (_from == address(cEther))
-    ? ETH_TOKEN_ADDRESS
-    : CToken(_from).underlying();
-    // get rate for underlying
-    return getValueViaParaswap(underlyingAddress, _to, underlyingAmount);
+    // Check call
+    (bool success) = address(_from).call(
+    abi.encodeWithSelector(CToken(_from).exchangeRateCurrent.selector));
+    if(success){
+      // get underlying amount
+      uint256 rate = CToken(_from).exchangeRateCurrent();
+      uint256 underlyingAmount = _amount.mul(rate).div(1e18);
+      // get underlying address
+      address underlyingAddress = (_from == address(cEther))
+      ? ETH_TOKEN_ADDRESS
+      : CToken(_from).underlying();
+      // get rate for underlying
+      return getValueViaParaswap(underlyingAddress, _to, underlyingAmount);
+    }
+    else{
+      return 0;
+    }
   }
 
   // helper for get value from Syntetix asset to any asset in DEXs which support sUSD
