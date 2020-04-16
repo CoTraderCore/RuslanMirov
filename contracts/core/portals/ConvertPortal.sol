@@ -40,43 +40,10 @@ contract ConvertPortal {
     CEther = _CEther;
   }
 
-  // convert CRYPTOCURRENCY, COMPOUND, SYNTHETIX, BANCOR/UNISWAP pools to _destination asset
-  function convert(address _source, uint256 _sourceAmount, address _destination) external {
-    // convert assets
-    if(tokensTypes.getType(_source) == bytes32("CRYPTOCURRENCY")){
-      // Convert via 1inch aggregator
-      exchangePortal.trade(ERC20(_source), _sourceAmount, ERC20(_destination), 2, BYTES32_EMPTY_ARRAY, "0x");
-    }
-    else if (tokensTypes.getType(_source) == bytes32("BANCOR POOL")){
-      // Convert BNT pools via Bancor DEX
-      exchangePortal.trade(ERC20(_source), _sourceAmount, ERC20(_destination), 1, BYTES32_EMPTY_ARRAY, "0x");
-    }
-    else if (tokensTypes.getType(_source) == bytes32("UNISWAP POOL")){
-      convertUniswap(_source, _sourceAmount, _destination);
-    }
-    else if (tokensTypes.getType(_source) == bytes32("COMPOUND")){
-      convertCompound(_source, _sourceAmount, _destination);
-    }
-    else if(tokensTypes.getType(_source) == bytes32("SYNTHETIX")){
-      convertSynthetix(_source, _sourceAmount, _destination);
-    }
-    else {
-      // Unknown type
-      revert();
-    }
-
-    // send back assets to sender
-    if(_destination == ETH_TOKEN_ADDRESS){
-
-    }else{
-
-    }
-  }
-
   // helper for convert Compound asset
   function convertCompound(address _source, uint256 _sourceAmount, address _destination) private {
     // step 1 convert cToken to underlying
-    CToken(_source).redeemUnderlying(_sourceAmount);
+    CToken(_source).redeem(_sourceAmount);
 
     // step 2 get underlying address and received underlying amount
     address underlyingAddress = (_source == CEther)
@@ -101,7 +68,7 @@ contract ConvertPortal {
   }
 
   // helper for convert Unswap asset
-  function convertUniswap(address _source, uint256 _sourceAmount, address _destination) private {
+  function convertUniswapPool(address _source, uint256 _sourceAmount, address _destination) private {
 
   }
 
@@ -109,4 +76,79 @@ contract ConvertPortal {
   function convertSynthetix(address _source, uint256 _sourceAmount, address _destination) private {
 
   }
+
+  // helper for convert Syntetix asset
+  function convertCryptocurency(address _source, uint256 _sourceAmount, address _destination) private {
+    _transferFromSenderAndApproveTo(ERC20(_source), _sourceAmount, address(exchangePortal));
+    // Convert crypto via 1inch aggregator
+    exchangePortal.trade(ERC20(_source), _sourceAmount, ERC20(_destination), 2, BYTES32_EMPTY_ARRAY, "0x");
+  }
+
+  // helper for convert Syntetix asset
+  function convertBancorPool(address _source, uint256 _sourceAmount, address _destination) private {
+    _transferFromSenderAndApproveTo(ERC20(_source), _sourceAmount, address(exchangePortal));
+    // Convert BNT pools via Bancor DEX
+    exchangePortal.trade(ERC20(_source), _sourceAmount, ERC20(_destination), 1, BYTES32_EMPTY_ARRAY, "0x");
+  }
+
+
+  // convert CRYPTOCURRENCY, COMPOUND, SYNTHETIX, BANCOR/UNISWAP pools to _destination asset
+  function convert(address _source, uint256 _sourceAmount, address _destination) external {
+    // convert assets
+    if(tokensTypes.getType(_source) == bytes32("CRYPTOCURRENCY")){
+      convertCryptocurency(_source, _sourceAmount, _destination);
+    }
+    else if (tokensTypes.getType(_source) == bytes32("BANCOR POOL")){
+      convertBancorPool(_source, _sourceAmount, _destination);
+    }
+    else if (tokensTypes.getType(_source) == bytes32("UNISWAP POOL")){
+      convertUniswapPool(_source, _sourceAmount, _destination);
+    }
+    else if (tokensTypes.getType(_source) == bytes32("COMPOUND")){
+      convertCompound(_source, _sourceAmount, _destination);
+    }
+    else if(tokensTypes.getType(_source) == bytes32("SYNTHETIX")){
+      convertSynthetix(_source, _sourceAmount, _destination);
+    }
+    else {
+      // Unknown type
+      revert();
+    }
+
+    // send back assets to sender
+    if (_destination == ETH_TOKEN_ADDRESS) {
+      (msg.sender).transfer(receivedAmount);
+    } else {
+      // transfer tokens received to sender
+      _destination.transfer(msg.sender, receivedAmount);
+    }
+
+    // After the trade, any _source that exchangePortal holds will be sent back to msg.sender
+    uint256 endAmount = (_source == ETH_TOKEN_ADDRESS) ? address(this).balance : _source.balanceOf(address(this));
+
+    // Check if we hold a positive amount of _source
+    if (endAmount > 0) {
+      if (_source == ETH_TOKEN_ADDRESS) {
+        (msg.sender).transfer(endAmount);
+      } else {
+        _source.transfer(msg.sender, endAmount);
+      }
+    }
+  }
+
+  /**
+  * @dev Transfers tokens to this contract and approves them to another address
+  *
+  * @param _source          Token to transfer and approve
+  * @param _sourceAmount    The amount to transfer and approve (in _source token)
+  * @param _to              Address to approve to
+  */
+  function _transferFromSenderAndApproveTo(ERC20 _source, uint256 _sourceAmount, address _to) private {
+    require(_source.transferFrom(msg.sender, address(this), _sourceAmount));
+
+    _source.approve(_to, _sourceAmount);
+  }
+
+  // fallback payable function to receive ether from other contract addresses
+  function() public payable {}
 }
