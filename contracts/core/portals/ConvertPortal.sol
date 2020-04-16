@@ -44,6 +44,56 @@ contract ConvertPortal {
     sUSD = _sUSD;
   }
 
+  // convert CRYPTOCURRENCY, COMPOUND, SYNTHETIX, BANCOR/UNISWAP pools to _destination asset
+  function convert(address _source, uint256 _sourceAmount, address _destination)
+    external
+    payable
+  {
+    uint256 receivedAmount = 0;
+    // convert assets
+    if(tokensTypes.getType(_source) == bytes32("CRYPTOCURRENCY")){
+      receivedAmount = convertCryptocurency(_source, _sourceAmount, _destination);
+    }
+    else if (tokensTypes.getType(_source) == bytes32("BANCOR POOL")){
+      receivedAmount = convertBancorPool(_source, _sourceAmount, _destination);
+    }
+    else if (tokensTypes.getType(_source) == bytes32("UNISWAP POOL")){
+      receivedAmount = convertUniswapPool(_source, _sourceAmount, _destination);
+    }
+    else if (tokensTypes.getType(_source) == bytes32("COMPOUND")){
+      receivedAmount = convertCompound(_source, _sourceAmount, _destination);
+    }
+    else if(tokensTypes.getType(_source) == bytes32("SYNTHETIX")){
+      receivedAmount = convertSynthetix(_source, _sourceAmount, _destination);
+    }
+    else {
+      // Unknown type
+      revert();
+    }
+
+    // send assets back
+    if (_destination == ETH_TOKEN_ADDRESS) {
+      (msg.sender).transfer(receivedAmount);
+    } else {
+      // transfer tokens received to sender
+      ERC20(_destination).transfer(msg.sender, receivedAmount);
+    }
+
+    // After the trade, any _source that exchangePortal holds will be sent back to msg.sender
+    uint256 endAmount = (_source == ETH_TOKEN_ADDRESS)
+    ? address(this).balance
+    : ERC20(_source).balanceOf(address(this));
+
+    // Check if we hold a positive amount of _source
+    if (endAmount > 0) {
+      if (_source == ETH_TOKEN_ADDRESS) {
+        (msg.sender).transfer(endAmount);
+      } else {
+        ERC20(_source).transfer(msg.sender, endAmount);
+      }
+    }
+  }
+
   // helper for convert Compound asset
   function convertCompound(address _source, uint256 _sourceAmount, address _destination)
     private
@@ -84,7 +134,49 @@ contract ConvertPortal {
     private
     returns(uint256)
   {
+    // sell pool
+    _transferFromSenderAndApproveTo(ERC20(_source), _sourceAmount, address(poolPortal));
+    poolPortal.sellPool(
+      1, // type Uniswap
+      _sourceAmount,
+      ERC20(_source)
+    );
 
+    // convert pool connectors to destanation
+    // get erc20 connector address
+    address ERCConnector = poolPortal.getTokenByUniswapExchange(_source);
+    uint256 ERCAmount = ERC20(ERCConnector).balanceOf(address(this));
+
+    // convert ERC20 connector via 1inch
+    ERC20(ERCConnector).approve(address(exchangePortal), ERCAmount);
+    exchangePortal.trade(
+      ERC20(ERCConnector),
+      ERCAmount,
+      ERC20(_destination),
+      2, // type 1inch
+      BYTES32_EMPTY_ARRAY,
+      "0x"
+    );
+
+    // if destanation != ETH, convert ETH also
+    if(_destination != ETH_TOKEN_ADDRESS){
+      uint256 ETHAmount = address(this).balance;
+      exchangePortal.trade.value(ETHAmount)(
+        ERC20(ETH_TOKEN_ADDRESS),
+        ETHAmount,
+        ERC20(_destination),
+        2, // type 1inch
+        BYTES32_EMPTY_ARRAY,
+        "0x"
+      );
+    }
+
+    // return received amount
+    if(_destination == ETH_TOKEN_ADDRESS){
+      return address(this).balance;
+    }else{
+      return ERC20(_destination).balanceOf(address(this));
+    }
   }
 
   // helper for convert Syntetix asset
@@ -168,57 +260,6 @@ contract ConvertPortal {
     );
 
     return destAmount;
-  }
-
-
-  // convert CRYPTOCURRENCY, COMPOUND, SYNTHETIX, BANCOR/UNISWAP pools to _destination asset
-  function convert(address _source, uint256 _sourceAmount, address _destination)
-    external
-    payable
-  {
-    uint256 receivedAmount = 0;
-    // convert assets
-    if(tokensTypes.getType(_source) == bytes32("CRYPTOCURRENCY")){
-      receivedAmount = convertCryptocurency(_source, _sourceAmount, _destination);
-    }
-    else if (tokensTypes.getType(_source) == bytes32("BANCOR POOL")){
-      receivedAmount = convertBancorPool(_source, _sourceAmount, _destination);
-    }
-    else if (tokensTypes.getType(_source) == bytes32("UNISWAP POOL")){
-      receivedAmount = convertUniswapPool(_source, _sourceAmount, _destination);
-    }
-    else if (tokensTypes.getType(_source) == bytes32("COMPOUND")){
-      receivedAmount = convertCompound(_source, _sourceAmount, _destination);
-    }
-    else if(tokensTypes.getType(_source) == bytes32("SYNTHETIX")){
-      receivedAmount = convertSynthetix(_source, _sourceAmount, _destination);
-    }
-    else {
-      // Unknown type
-      revert();
-    }
-
-    // send assets back
-    if (_destination == ETH_TOKEN_ADDRESS) {
-      (msg.sender).transfer(receivedAmount);
-    } else {
-      // transfer tokens received to sender
-      ERC20(_destination).transfer(msg.sender, receivedAmount);
-    }
-
-    // After the trade, any _source that exchangePortal holds will be sent back to msg.sender
-    uint256 endAmount = (_source == ETH_TOKEN_ADDRESS)
-    ? address(this).balance
-    : ERC20(_source).balanceOf(address(this));
-
-    // Check if we hold a positive amount of _source
-    if (endAmount > 0) {
-      if (_source == ETH_TOKEN_ADDRESS) {
-        (msg.sender).transfer(endAmount);
-      } else {
-        ERC20(_source).transfer(msg.sender, endAmount);
-      }
-    }
   }
 
   /**
