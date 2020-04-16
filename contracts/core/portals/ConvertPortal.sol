@@ -14,6 +14,7 @@ contract ConvertPortal {
   address constant private ETH_TOKEN_ADDRESS = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
   bytes32[] private BYTES32_EMPTY_ARRAY = new bytes32[](0);
   address public CEther;
+  address public sUSD;
   ExchangePortalInterface public exchangePortal;
   PoolPortalInterface public poolPortal;
   ITokensTypeStorage  public tokensTypes;
@@ -25,12 +26,14 @@ contract ConvertPortal {
   * @param _poolPortal             address of pool portal
   * @param _tokensTypes            address of the tokens type storage
   * @param _CEther                 address of Compound ETH wrapper
+  * @param _sUSD                   address of Synthetix USD wrapper
   */
   constructor(
     address _exchangePortal,
     address _poolPortal,
     address _tokensTypes,
-    address _CEther
+    address _CEther,
+    address _sUSD
     )
     public
   {
@@ -38,6 +41,7 @@ contract ConvertPortal {
     poolPortal = PoolPortalInterface(_poolPortal);
     tokensTypes = ITokensTypeStorage(_tokensTypes);
     CEther = _CEther;
+    sUSD = _sUSD;
   }
 
   // helper for convert Compound asset
@@ -84,14 +88,51 @@ contract ConvertPortal {
   }
 
   // helper for convert Syntetix asset
+  // from should be Synthetix asset
   function convertSynthetix(address _source, uint256 _sourceAmount, address _destination)
     private
     returns(uint256)
   {
+    uint256 destAmount = 0;
+    _transferFromSenderAndApproveTo(ERC20(_source), _sourceAmount, address(exchangePortal));
+    if(_source == sUSD){
+      // if this is sUSD, convert via 1inch
+      destAmount = exchangePortal.trade(
+        ERC20(_source),
+        _sourceAmount,
+        ERC20(_destination),
+        2,
+        BYTES32_EMPTY_ARRAY,
+        "0x"
+      );
+    }
+    else{
+      // else convert source to cUSD via Syntetix
+      uint256 sUSDAmount = exchangePortal.trade(
+        ERC20(_source),
+        _sourceAmount,
+        ERC20(sUSD),
+        3, // type Synthetix
+        BYTES32_EMPTY_ARRAY,
+        "0x"
+      );
 
+      // then convert sUSD to destination via 1inch
+      ERC20(sUSD).approve(address(exchangePortal), sUSDAmount);
+      destAmount = exchangePortal.trade(
+        ERC20(sUSD),
+        _sourceAmount,
+        ERC20(_destination),
+        2, // type 1inch
+        BYTES32_EMPTY_ARRAY,
+        "0x"
+      );
+    }
+
+    return destAmount;
   }
 
-  // helper for convert Syntetix asset
+  // helper for convert standrad crypto assets
   function convertCryptocurency(address _source, uint256 _sourceAmount, address _destination)
     private
     returns(uint256)
@@ -110,13 +151,13 @@ contract ConvertPortal {
     return destAmount;
   }
 
-  // helper for convert Syntetix asset
+  // helper for convert Bancor pools asset
   function convertBancorPool(address _source, uint256 _sourceAmount, address _destination)
     private
     returns(uint256)
   {
     _transferFromSenderAndApproveTo(ERC20(_source), _sourceAmount, address(exchangePortal));
-    // Convert BNT pools via Bancor DEX
+    // Convert BNT pools just via Bancor DEX
     uint256 destAmount = exchangePortal.trade(
       ERC20(_source),
       _sourceAmount,
@@ -131,7 +172,10 @@ contract ConvertPortal {
 
 
   // convert CRYPTOCURRENCY, COMPOUND, SYNTHETIX, BANCOR/UNISWAP pools to _destination asset
-  function convert(address _source, uint256 _sourceAmount, address _destination) external {
+  function convert(address _source, uint256 _sourceAmount, address _destination)
+    external
+    payable
+  {
     uint256 receivedAmount = 0;
     // convert assets
     if(tokensTypes.getType(_source) == bytes32("CRYPTOCURRENCY")){
@@ -154,7 +198,7 @@ contract ConvertPortal {
       revert();
     }
 
-    // send back assets to sender
+    // send assets back
     if (_destination == ETH_TOKEN_ADDRESS) {
       (msg.sender).transfer(receivedAmount);
     } else {
@@ -163,11 +207,17 @@ contract ConvertPortal {
     }
 
     // After the trade, any _source that exchangePortal holds will be sent back to msg.sender
-    uint256 endAmount = ERC20(_source).balanceOf(address(this));
+    uint256 endAmount = (_source == ETH_TOKEN_ADDRESS)
+    ? address(this).balance
+    : ERC20(_source).balanceOf(address(this));
 
     // Check if we hold a positive amount of _source
     if (endAmount > 0) {
-      ERC20(_source).transfer(msg.sender, endAmount);
+      if (_source == ETH_TOKEN_ADDRESS) {
+        (msg.sender).transfer(endAmount);
+      } else {
+        ERC20(_source).transfer(msg.sender, endAmount);
+      }
     }
   }
 
