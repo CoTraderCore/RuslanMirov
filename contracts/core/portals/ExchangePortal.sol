@@ -33,7 +33,6 @@ import "../../compound/CToken.sol";
 import "../interfaces/ExchangePortalInterface.sol";
 import "../interfaces/PermittedStabelsInterface.sol";
 import "../interfaces/PoolPortalInterface.sol";
-
 import "../interfaces/ITokensTypeStorage.sol";
 
 
@@ -516,27 +515,34 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @return best price from Paraswap or 1inch for ERC20, or ratio for Uniswap and Bancor pools
   */
   function getValue(address _from, address _to, uint256 _amount) public view returns (uint256){
-    if(tokensTypes.getType(_from) == bytes32("CRYPTOCURRENCY")){
-      uint256 valueFromOneInch = getValueViaOneInch(_from, _to, _amount);
-      uint256 valueFromParaswap = getValueViaParaswap(_from, _to, _amount);
-      // return best price 
-      return (valueFromOneInch > valueFromParaswap) ? valueFromOneInch : valueFromParaswap;
-    }
-    else if (tokensTypes.getType(_from) == bytes32("BANCOR POOL")){
-      return getValueViaBancor(_from, _to, _amount);
-    }
-    else if (tokensTypes.getType(_from) == bytes32("UNISWAP POOL")){
-      return getValueForUniswapPools(_from, _to, _amount);
-    }
-    else if (tokensTypes.getType(_from) == bytes32("COMPOUND")){
-      return getValueViaCompound(_from, _to, _amount);
-    }
-    else if(tokensTypes.getType(_from) == bytes32("SYNTHETIX")){
-      return getValueViaSynthetix(_from, _to, _amount);
+    if(_amount > 0){
+      if(tokensTypes.getType(_from) == bytes32("CRYPTOCURRENCY")){
+        uint256 valueFromOneInch = getValueViaOneInch(_from, _to, _amount);
+        uint256 valueFromParaswap = getValueViaParaswap(_from, _to, _amount);
+        // return best price
+        return (valueFromOneInch > valueFromParaswap)
+        ? valueFromOneInch
+        : valueFromParaswap;
+      }
+      else if (tokensTypes.getType(_from) == bytes32("BANCOR POOL")){
+        return getValueViaBancor(_from, _to, _amount);
+      }
+      else if (tokensTypes.getType(_from) == bytes32("UNISWAP POOL")){
+        return getValueForUniswapPools(_from, _to, _amount);
+      }
+      else if (tokensTypes.getType(_from) == bytes32("COMPOUND")){
+        return getValueViaCompound(_from, _to, _amount);
+      }
+      else if(tokensTypes.getType(_from) == bytes32("SYNTHETIX")){
+        return getValueViaSynthetix(_from, _to, _amount);
+      }
+      else{
+        // Unmarked type, try find value
+        return findValue(_from, _to, _amount);
+      }
     }
     else{
-      // Unmarked type, try find value
-      return findValue(_from, _to, _amount);
+      return 0;
     }
   }
 
