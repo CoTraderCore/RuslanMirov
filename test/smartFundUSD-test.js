@@ -905,7 +905,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     })
   })
 
-  describe('Min return and CRYPTOCURRENCY key', function() {
+  describe('Min return', function() {
     it('Not allow execude transaction trade if for some reason DEX not sent min return asset', async function() {
       // deploy smartFund with 10% success fee
       await deployContracts(1000, 0)

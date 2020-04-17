@@ -275,7 +275,7 @@ contract ConvertPortal {
   * @param _to              Address to approve to
   */
   function _transferFromSenderAndApproveTo(ERC20 _source, uint256 _sourceAmount, address _to) private {
-    require(_source.transferFrom(msg.sender, address(this), _sourceAmount));
+    require(_source.transferFrom(msg.sender, address(this), _sourceAmount), "Can not transfer from");
 
     _source.approve(_to, _sourceAmount);
   }

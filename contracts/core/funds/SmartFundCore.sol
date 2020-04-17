@@ -257,23 +257,46 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   {
     // check if can be converted
     // this is an analogue of try catch for version 4.24
-    (bool success) = address(convertPortal).call(
-    abi.encodeWithSelector(convertPortal.convert.selector,
-      _source,
-      _amount,
-      _destanation,
-      _receiver)
-    );
-
-    if(success){
-      // convert to core fund asset
-      convertPortal.convert(
+    bool success;
+    if(_source == address(ETH_TOKEN_ADDRESS)){
+      (success) = address(convertPortal).call.value(_amount)(
+      abi.encodeWithSelector(convertPortal.convert.selector,
         _source,
         _amount,
         _destanation,
-        _receiver
+        _receiver)
       );
     }else{
+      ERC20(_source).approve(address(convertPortal), _amount);
+      (success) = address(convertPortal).call(
+      abi.encodeWithSelector(convertPortal.convert.selector,
+        _source,
+        _amount,
+        _destanation,
+        _receiver)
+      );
+    }
+
+    if(success){
+      // convert to core fund asset
+      if(_source == address(ETH_TOKEN_ADDRESS)){
+        convertPortal.convert.value(_amount)(
+          _source,
+          _amount,
+          _destanation,
+          _receiver
+        );
+      }else{
+        ERC20(_source).approve(address(convertPortal), _amount);
+        convertPortal.convert(
+          _source,
+          _amount,
+          _destanation,
+          _receiver
+        );
+      }
+    }
+    else{
       // withdarw without convert
       if(_source == address(ETH_TOKEN_ADDRESS)){
         _receiver.transfer(_amount);

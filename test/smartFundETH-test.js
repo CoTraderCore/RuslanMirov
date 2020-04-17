@@ -732,7 +732,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   })
 
 
-  describe('Min return and CRYPTOCURRENCY Key', function() {
+  describe('Min return', function() {
     it('Not allow execude transaction trade if for some reason DEX not sent min return asset', async function() {
       // deploy smartFund with 10% success fee
       await deployContracts(1000, 0)
@@ -1540,6 +1540,48 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // check smart fund received sETH and send sUSD
       assert.equal(await sUSD.balanceOf(smartFundETH.address), 0)
       assert.equal(await sETH.balanceOf(smartFundETH.address), toWei(String(1)))
+    })
+  })
+
+
+  describe('Convert withdarwed assets to core fund asset', function() {
+    it('correct convert CRYPTOCURRENCY', async function() {
+      // deploy smartFund with 10% success fee
+      await deployContracts(1000, 0)
+      // give exchange portal contract some money
+      await xxxERC.transfer(exchangePortal.address, toWei(String(1)))
+
+      // deposit in fund
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
+
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        toWei(String(1)),
+        xxxERC.address,
+        0,
+        [],
+        "0x",
+        toWei(String(1)),
+        {
+          from: userOne,
+        }
+      )
+
+      assert.equal(fromWei(await web3.eth.getBalance(exchangePortal.address)), 1)
+      const userXXXBalanceBeforeWithdarw = await xxxERC.balanceOf(userOne)
+      const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
+
+      await smartFundETH.withdraw(100, true)
+
+      const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
+      const userXXXBalanceAfterWithdarw = await xxxERC.balanceOf(userOne)
+
+      // user should receive his ETH back
+      assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
+      // user should NOT receive xxx token
+      assert.equal(fromWei(userXXXBalanceBeforeWithdarw), fromWei(userXXXBalanceAfterWithdarw))
+
+
     })
   })
   //END
