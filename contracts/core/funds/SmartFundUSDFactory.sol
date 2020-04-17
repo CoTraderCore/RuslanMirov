@@ -4,12 +4,17 @@ pragma solidity ^0.4.24;
 import "./SmartFundUSD.sol";
 
 contract SmartFundUSDFactory {
+  address public platfromAddress;
+
+  constructor(address _platfromAddress) public {
+    platfromAddress = _platfromAddress;
+  }
+
   function createSmartFund(
     address _owner,
     string  _name,
     uint256 _successFee,
     uint256 _platformFee,
-    address _platfromAddress,
     address _exchangePortalAddress,
     address _permittedExchanges,
     address _permittedPools,
@@ -26,7 +31,7 @@ contract SmartFundUSDFactory {
       _name,
       _successFee,
       _platformFee,
-      _platfromAddress,
+      platfromAddress,
       _exchangePortalAddress,
       _permittedExchanges,
       _permittedPools,
