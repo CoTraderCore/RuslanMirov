@@ -10,6 +10,7 @@ Not finished
 2) Convert assets to ETH or USD before withdraw
 3) Add min return for trade
 4) Add Synthetix
+5) Update Solidity version from 4.24 to 6.0
 ```
 
 
@@ -18,6 +19,7 @@ Not finished
 ```
 NOTE: in separate console
 
+0) npm i 
 1) npm run ganache  
 2) truffle test
 ```

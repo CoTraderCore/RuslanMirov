@@ -255,8 +255,8 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   )
     private
   {
-    // check if can be converted
     // this is an analogue of try catch for version 4.24
+    // try convert
     bool success;
     if(_source == address(ETH_TOKEN_ADDRESS)){
       (success) = address(convertPortal).call.value(_amount)(
@@ -276,35 +276,15 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
         _receiver)
       );
     }
-
-    if(success){
-      // convert to core fund asset
-      if(_source == address(ETH_TOKEN_ADDRESS)){
-        convertPortal.convert.value(_amount)(
-          _source,
-          _amount,
-          _destanation,
-          _receiver
-        );
-      }else{
-        ERC20(_source).approve(address(convertPortal), _amount);
-        convertPortal.convert(
-          _source,
-          _amount,
-          _destanation,
-          _receiver
-        );
-      }
-    }
-    else{
-      // withdarw without convert
+    // catch send assets without convert
+    if(!success){
       if(_source == address(ETH_TOKEN_ADDRESS)){
         _receiver.transfer(_amount);
       }else{
         ERC20(_source).transfer(_receiver, _amount);
       }
-    }
-  }
+   }
+ }
 
   /**
   * @dev Withdraws users fund holdings, sends (userShares/totalShares) of every held token
