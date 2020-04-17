@@ -26,6 +26,7 @@ contract SmartFundRegistry is Ownable {
   // Addresses of portals
   address public poolPortalAddress;
   address public exchangePortalAddress;
+  address public convertPortalAddress;
 
   // platForm fee is out of 10,000, e.g 2500 is 25%
   uint256 public platformFee;
@@ -48,7 +49,7 @@ contract SmartFundRegistry is Ownable {
   /**
   * @dev contructor
   *
-  * @param _COTDAOWallet                 address of platform wallet contract
+  * @param _convertPortalAddress         address of convert portal contract
   * @param _platformFee                  Initial platform fee
   * @param _permittedExchangesAddress    Address of the permittedExchanges contract
   * @param _exchangePortalAddress        Address of the initial ExchangePortal contract
@@ -61,7 +62,7 @@ contract SmartFundRegistry is Ownable {
   * @param _cEther                       Address of Compound ETH wrapper
   */
   constructor(
-    address _COTDAOWallet,
+    address _convertPortalAddress,
     uint256 _platformFee,
     address _permittedExchangesAddress,
     address _exchangePortalAddress,
@@ -73,7 +74,7 @@ contract SmartFundRegistry is Ownable {
     address _smartFundUSDFactory,
     address _cEther
   ) public {
-    COTDAOWallet = _COTDAOWallet;
+    convertPortalAddress = _convertPortalAddress;
     platformFee = _platformFee;
     exchangePortalAddress = _exchangePortalAddress;
     permittedExchanges = PermittedExchangesInterface(_permittedExchangesAddress);
@@ -111,13 +112,13 @@ contract SmartFundRegistry is Ownable {
         _name,
         _successFee,
         platformFee,
-        COTDAOWallet,
         exchangePortalAddress,
         address(permittedExchanges),
         address(permittedPools),
         address(permittedStabels),
         poolPortalAddress,
         stableCoinAddress,
+        convertPortalAddress,
         cEther
       );
     }else{
@@ -127,11 +128,11 @@ contract SmartFundRegistry is Ownable {
         _name,
         _successFee,
         platformFee,
-        COTDAOWallet,
         exchangePortalAddress,
         address(permittedExchanges),
         address(permittedPools),
         poolPortalAddress,
+        convertPortalAddress,
         cEther
       );
     }

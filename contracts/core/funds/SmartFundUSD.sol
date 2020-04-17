@@ -33,6 +33,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
   * @param _permittedStabels             Address of PermittedStabels contract
   * @param _poolPortalAddress            Address of initial pool portal
   * @param _stableCoinAddress            address of stable coin
+  * @param _convertPortalAddress         Address of the convert portal
   * @param _cEther                       Address of the cEther
   */
   constructor(
@@ -47,6 +48,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
     address _permittedStabels,
     address _poolPortalAddress,
     address _stableCoinAddress,
+    address _convertPortalAddress,
     address _cEther
   )
   SmartFundCore(
@@ -59,6 +61,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
     _permittedExchangesAddress,
     _permittedPoolsAddress,
     _poolPortalAddress,
+    _convertPortalAddress,
     _cEther
   )
   public {

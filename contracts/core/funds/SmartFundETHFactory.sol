@@ -19,6 +19,7 @@ contract SmartFundETHFactory {
     address _permittedExchanges,
     address _permittedPools,
     address _poolPortalAddress,
+    address _convertPortalAddress,
     address _cEther
     )
   public
@@ -34,6 +35,7 @@ contract SmartFundETHFactory {
       _permittedExchanges,
       _permittedPools,
       _poolPortalAddress,
+      _convertPortalAddress,
       _cEther
     );
 

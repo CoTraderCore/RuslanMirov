@@ -21,6 +21,7 @@ contract SmartFundUSDFactory {
     address _permittedStabels,
     address _poolPortalAddress,
     address _stableCoinAddress,
+    address _convertPortalAddress,
     address _cEther
     )
   public
@@ -38,6 +39,7 @@ contract SmartFundUSDFactory {
       _permittedStabels,
       _poolPortalAddress,
       _stableCoinAddress,
+      _convertPortalAddress,
       _cEther
     );
 

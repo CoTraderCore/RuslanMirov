@@ -15,9 +15,12 @@ pragma solidity ^0.4.24;
 
 import "../interfaces/ExchangePortalInterface.sol";
 import "../interfaces/PoolPortalInterface.sol";
+import "../interfaces/ConvertPortalInterface.sol";
+
 import "../interfaces/PermittedExchangesInterface.sol";
 import "../interfaces/PermittedPoolsInterface.sol";
 import "../interfaces/SmartFundOverrideInterface.sol";
+
 import "../../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../zeppelin-solidity/contracts/math/SafeMath.sol";
@@ -38,6 +41,9 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
 
   // The Interface of pool portall
   PoolPortalInterface public poolPortal;
+
+  // The Interface of convert portal
+  ConvertPortalInterface public convertPortal;
 
   // The Smart Contract which stores the addresses of all the authorized Exchange Portals
   PermittedExchangesInterface public permittedExchanges;
@@ -128,6 +134,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     address _permittedExchangesAddress,
     address _permittedPoolsAddress,
     address _poolPortalAddress,
+    address _convertPortalAddress,
     address _cEther
   )public{
     // never allow a 100% fee
@@ -160,7 +167,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     permittedExchanges = PermittedExchangesInterface(_permittedExchangesAddress);
     permittedPools = PermittedPoolsInterface(_permittedPoolsAddress);
     poolPortal = PoolPortalInterface(_poolPortalAddress);
-
+    convertPortal = ConvertPortalInterface(_convertPortalAddress);
 
     cEther = _cEther;
 

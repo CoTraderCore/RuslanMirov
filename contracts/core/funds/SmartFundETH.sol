@@ -23,6 +23,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
   * @param _permittedExchangesAddress    Address of PermittedExchanges contract
   * @param _permittedPoolsAddress        Address of PermittedPools contract
   * @param _poolPortalAddress            Address of initial pool portal
+  * @param _convertPortalAddress         Address of the convert portal
   * @param _cEther                       Address of the cEther
   */
   constructor(
@@ -35,6 +36,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
     address _permittedExchangesAddress,
     address _permittedPoolsAddress,
     address _poolPortalAddress,
+    address _convertPortalAddress,
     address _cEther
   )
   SmartFundCore(
@@ -47,6 +49,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
     _permittedExchangesAddress,
     _permittedPoolsAddress,
     _poolPortalAddress,
+    _convertPortalAddress,
     _cEther
   )
   public{}
@@ -104,7 +107,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
     address[] memory fromAddresses = new address[](tokenAddresses.length - 1); // Sub ETH
     uint256[] memory amounts = new uint256[](tokenAddresses.length - 1);
     uint index = 0;
-    
+
     for (uint256 i = 1; i < tokenAddresses.length; i++) {
       fromAddresses[index] = tokenAddresses[i];
       amounts[index] = ERC20(tokenAddresses[i]).balanceOf(address(this));
