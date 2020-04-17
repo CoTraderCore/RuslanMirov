@@ -17,6 +17,7 @@ const ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 // real contracts
 const SmartFundETH = artifacts.require('./core/funds/SmartFundETH.sol')
 const TokensTypeStorage = artifacts.require('./core/storage/TokensTypeStorage.sol')
+const ConvertPortal = artifacts.require('./core/portals/ConvertPortal.sol')
 
 // mock
 const Token = artifacts.require('./tokens/Token')
@@ -56,7 +57,8 @@ let xxxERC,
     synthetix,
     synthetixRates,
     synthetixAddressResolver,
-    tokensType
+    tokensType,
+    convertPortal
 
 
 
@@ -185,6 +187,14 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       tokensType.address
     )
 
+    convertPortal = await ConvertPortal.new(
+      exchangePortal.address,
+      poolPortal.address,
+      tokensType.address,
+      cEther.address,
+      sUSD.address
+    )
+
     // allow exchange portal and pool portal write to token type storage
     await tokensType.addNewPermittedAddress(exchangePortal.address)
     await tokensType.addNewPermittedAddress(poolPortal.address)
@@ -200,7 +210,9 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       '0x0000000000000000000000000000000000000000', // address _permittedExchangesAddress,
       '0x0000000000000000000000000000000000000000', // address _permittedPoolsAddress,
       poolPortal.address,                           // address _poolPortalAddress,
+      convertPortal.address,                        // address of convert portal
       cEther.address                                // address _cEther
+
     )
 
     // send all BNT and UNI pools to portal
@@ -456,7 +468,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         assert.equal(fromWei(totalWeiDeposited), 1)
 
         // user1 now withdraws 190 ether, 90 of which are profit
-        await smartFundETH.withdraw(0, { from: userOne })
+        await smartFundETH.withdraw(0, false, { from: userOne })
 
         const totalWeiWithdrawn = await smartFundETH.totalWeiWithdrawn()
         assert.equal(fromWei(totalWeiWithdrawn), 1.9)
@@ -475,7 +487,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         assert.equal(fundManagerTotalCut, toWei(String(0.1)))
 
           // // FM now withdraws their profit
-        await smartFundETH.fundManagerWithdraw({ from: userOne })
+        await smartFundETH.fundManagerWithdraw(false, { from: userOne })
         // Manager, can get his 10%, and remains 0.0001996 it's  platform commision
         assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
       })
@@ -526,12 +538,12 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(2)))
 
         // user1 now withdraws 190 ether, 90 of which are profit
-        await smartFundETH.withdraw(0, { from: userOne })
+        await smartFundETH.withdraw(0, false, { from: userOne })
 
         assert.equal(await smartFundETH.calculateFundValue(), toWei(String(0.1)))
 
         // FM now withdraws their profit
-        await smartFundETH.fundManagerWithdraw({ from: userOne })
+        await smartFundETH.fundManagerWithdraw(false, { from: userOne })
         assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
 
         // now user2 deposits into the fund
@@ -597,7 +609,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
       await smartFundETH.deposit({ from: userOne, value: 100 })
       assert.equal(await web3.eth.getBalance(smartFundETH.address), 100)
-      await smartFundETH.withdraw(0, { from: userOne })
+      await smartFundETH.withdraw(0, false, { from: userOne })
       assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
     })
 
@@ -611,7 +623,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
       totalShares = await smartFundETH.totalShares()
 
-      await smartFundETH.withdraw(5000, { from: userOne }) // 50.00%
+      await smartFundETH.withdraw(5000, false, { from: userOne }) // 50.00%
 
       assert.equal(await smartFundETH.totalShares(), totalShares / 2)
     })
@@ -629,12 +641,12 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       sfBalance = await web3.eth.getBalance(smartFundETH.address)
       assert.equal(sfBalance, 200)
 
-      await smartFundETH.withdraw(0, { from: userOne })
+      await smartFundETH.withdraw(0, false, { from: userOne })
       sfBalance = await web3.eth.getBalance(smartFundETH.address)
 
       assert.equal(sfBalance, 100)
 
-      await smartFundETH.withdraw(0, { from: userTwo })
+      await smartFundETH.withdraw(0, false, { from: userTwo })
       sfBalance = await web3.eth.getBalance(smartFundETH.address)
       assert.equal(sfBalance, 0)
     })
@@ -705,7 +717,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await deployContracts(2000,0)
       await fundManagerTest(20)
 
-      await smartFundETH.fundManagerWithdraw({ from: userOne })
+      await smartFundETH.fundManagerWithdraw(false, { from: userOne })
 
       const {
         fundManagerRemainingCut,
@@ -795,9 +807,9 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         }
       )
 
-      await smartFundETH.fundManagerWithdraw()
+      await smartFundETH.fundManagerWithdraw(false)
 
-      await smartFundETH.withdraw(0, { from: userTwo })
+      await smartFundETH.withdraw(0, false, { from: userTwo })
 
       const xxxUserTwo = await xxxERC.balanceOf(userTwo)
 
@@ -967,7 +979,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // Total should be the same
       assert.equal(await smartFundETH.calculateFundValue(), toWei(String(3)))
 
-      await smartFundETH.withdraw(0)
+      await smartFundETH.withdraw(0, false)
 
       // check balance
       assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
@@ -1017,7 +1029,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       const ownerDAIBalanceBefore = await DAI.balanceOf(userOne)
 
       // withdarw
-      await smartFundETH.withdraw(0)
+      await smartFundETH.withdraw(0, false)
 
       // check asset allocation in fund after withdraw
       assert.equal(await cEther.balanceOf(smartFundETH.address), 0)
@@ -1274,7 +1286,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // Buy BNT Pool
       await smartFundETH.buyPool(toWei(String(2)), 0, DAIBNT.address)
 
-      await smartFundETH.withdraw(0)
+      await smartFundETH.withdraw(0, false,)
 
       // investor get his BNT and UNI pools
       assert.equal(await DAIBNT.balanceOf(userOne), toWei(String(2)))
@@ -1335,7 +1347,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(fromWei(totalWeiDeposited), 1)
 
       // user1 now withdraws 190 ether, 90 of which are profit
-      await smartFundETH.withdraw(0, { from: userOne })
+      await smartFundETH.withdraw(0, false, { from: userOne })
 
       const totalWeiWithdrawn = await smartFundETH.totalWeiWithdrawn()
       assert.equal(fromWei(totalWeiWithdrawn), 1.9)
@@ -1354,7 +1366,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(fundManagerTotalCut, toWei(String(0.1)))
 
       // // FM now withdraws their profit
-      await smartFundETH.fundManagerWithdraw({ from: userOne })
+      await smartFundETH.fundManagerWithdraw(false, { from: userOne })
 
       // Platform get 10%
       assert.equal(fromWei(await web3.eth.getBalance(COT_DAO_WALLET.address)), 0.01)
@@ -1407,7 +1419,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(fromWei(totalWeiDeposited), 1)
 
       // user1 now withdraws 190 ether, 90 of which are profit
-      await smartFundETH.withdraw(0, { from: userOne })
+      await smartFundETH.withdraw(0, false, { from: userOne })
 
       const totalWeiWithdrawn = await smartFundETH.totalWeiWithdrawn()
       assert.equal(fromWei(totalWeiWithdrawn), 1.9)
@@ -1426,7 +1438,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(fundManagerTotalCut, toWei(String(0.1)))
 
       // // FM now withdraws their profit
-      await smartFundETH.fundManagerWithdraw({ from: userOne })
+      await smartFundETH.fundManagerWithdraw(false, { from: userOne })
 
       // Platform get 10%
       // 0.005 xxx = 0.01 ETH
@@ -1451,7 +1463,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.deposit({ from: userTwo, value: 100 })
       await smartFundETH.transfer(userThree, toWei(String(1)), { from: userTwo })
       assert.equal(await smartFundETH.balanceOf(userThree), toWei(String(1)))
-      await smartFundETH.withdraw(0, { from: userThree })
+      await smartFundETH.withdraw(0, false, { from: userThree })
       assert.equal(await smartFundETH.balanceOf(userThree), 0)
     })
   })

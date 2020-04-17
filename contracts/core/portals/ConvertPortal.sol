@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 import "../interfaces/ExchangePortalInterface.sol";
 import "../interfaces/PoolPortalInterface.sol";
 import "../interfaces/ITokensTypeStorage.sol";
-import "../../CToken";
+import "../../compound/CToken.sol";
 import "../../zeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
 
 contract ConvertPortal {

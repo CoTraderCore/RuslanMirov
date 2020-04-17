@@ -22,12 +22,11 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
     this.COT_DAO_WALLET = await CoTraderDAOWalletMock.new()
     this.ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
-    this.smartFundETHFactory = await SmartFundETHFactory.new()
-    this.smartFundUSDFactory = await SmartFundUSDFactory.new()
-
+    this.smartFundETHFactory = await SmartFundETHFactory.new(this.COT_DAO_WALLET.address)
+    this.smartFundUSDFactory = await SmartFundUSDFactory.new(this.COT_DAO_WALLET.address)
 
     this.registry = await SmartFundRegistry.new(
-      this.COT_DAO_WALLET.address,                  //   address of platform wallet
+      '0x0000000000000000000000000000000000000000', //   Convert portal address
       1000,                                         //   PLATFORM_FEE,
       '0x0000000000000000000000000000000000000000', //   PermittedExchanges.address,
       '0x0000000000000000000000000000000000000000', //   ExchangePortal.address,
@@ -45,9 +44,6 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
     it('Correct initial registry', async function() {
       const totalFunds = await this.registry.totalSmartFunds()
       assert.equal(0, totalFunds)
-
-      const COT_DAO_WALLET = await this.registry.COTDAOWallet()
-      assert.equal(COT_DAO_WALLET, this.COT_DAO_WALLET.address)
     })
   })
 
