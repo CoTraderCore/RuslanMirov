@@ -180,12 +180,21 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   * @param _mul                The numerator
   * @param _div                The denominator
   * @param _withdrawAddress    Address to send the tokens/ether to
+  * @param _convert            if true, convert assets to base asset
   *
   * NOTE: _withdrawAddress changed from address to address[] arrays because balance calculation should be performed
   * once for all usesr who wants to withdraw from the current balance.
   *
   */
-  function _withdraw(uint256[] _mul, uint256[] _div, address[] memory _withdrawAddress) internal returns (uint256) {
+  function _withdraw(
+    uint256[] _mul,
+    uint256[] _div,
+    address[] memory _withdrawAddress,
+    bool _convert
+    )
+    internal
+    returns (uint256)
+  {
     for (uint8 i = 1; i < tokenAddresses.length; i++) {
       // Transfer that _mul/_div of each token we hold to the user
       ERC20 token = ERC20(tokenAddresses[i]);
@@ -194,7 +203,17 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
       // Transfer ERC20 to _withdrawAddress
       for(uint8 j = 0; j < _withdrawAddress.length; j++){
         uint256 payoutAmount = fundAmount.mul(_mul[j]).div(_div[j]);
-        token.transfer(_withdrawAddress[j], payoutAmount);
+        // Try convert ERC20 to ETH
+        if(_convert){
+          tryConvert(
+            address(token),
+            payoutAmount,
+            ETH_TOKEN_ADDRESS,
+            _withdrawAddress[j]
+          );
+        }else{
+          token.transfer(_withdrawAddress[j], payoutAmount);
+        }
       }
     }
      uint256 etherBalance = address(this).balance;
@@ -205,13 +224,40 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
      }
   }
 
+
+  function tryConvert(address _source, uint256 _amount, address _destanation, address _receiver)
+    private
+  {
+    // check if can be converted
+    (bool success) = address(convertPortal).call(
+    abi.encodeWithSelector(convertPortal.convert.selector,
+      _source,
+      _amount,
+      _destanation,
+      _receiver)
+    );
+
+    if(success){
+      // convert to ETH
+      convertPortal.convert(
+        _source,
+        _amount,
+        _destanation,
+        _receiver
+      );
+    }else{
+      // withdarw origin
+      ERC20(_source).transfer(_receiver, _amount);
+    }
+  }
+
   /**
   * @dev Withdraws users fund holdings, sends (userShares/totalShares) of every held token
   * to msg.sender, defaults to 100% of users shares.
   *
   * @param _percentageWithdraw    The percentage of the users shares to withdraw.
   */
-  function withdraw(uint256 _percentageWithdraw) external {
+  function withdraw(uint256 _percentageWithdraw, bool _convert) external {
     require(totalShares != 0);
 
     uint256 percentageWithdraw = (_percentageWithdraw == 0) ? TOTAL_PERCENTAGE : _percentageWithdraw;
@@ -239,7 +285,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     cut[0] = withdrawShares;
 
     // do withdraw
-    _withdraw(cut, value, spenders);
+    _withdraw(cut, value, spenders,_convert);
 
     // Store the value we are withdrawing in ether
     uint256 valueWithdrawn = fundValue.mul(withdrawShares).div(totalShares);
@@ -640,7 +686,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   /**
   * @dev Allows the fund manager to withdraw their cut of the funds profit
   */
-  function fundManagerWithdraw() public onlyOwner {
+  function fundManagerWithdraw(bool _convert) public onlyOwner {
     uint256 fundManagerCut;
     uint256 fundValue;
 
@@ -662,7 +708,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     cut[1] = fundManagerCut - platformCut;
 
     // do withdraw
-    _withdraw(cut, value, spenders);
+    _withdraw(cut, value, spenders, _convert);
 
     // add report
     fundManagerCashedOut = fundManagerCashedOut.add(fundManagerCut);

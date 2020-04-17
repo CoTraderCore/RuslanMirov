@@ -45,7 +45,12 @@ contract ConvertPortal {
   }
 
   // convert CRYPTOCURRENCY, COMPOUND, SYNTHETIX, BANCOR/UNISWAP pools to _destination asset
-  function convert(address _source, uint256 _sourceAmount, address _destination)
+  function convert(
+    address _source,
+    uint256 _sourceAmount,
+    address _destination,
+    address _receiver
+  )
     external
     payable
   {
@@ -71,12 +76,12 @@ contract ConvertPortal {
       revert();
     }
 
-    // send assets back
+    // send assets to _receiver
     if (_destination == ETH_TOKEN_ADDRESS) {
-      (msg.sender).transfer(receivedAmount);
+      (_receiver).transfer(receivedAmount);
     } else {
       // transfer tokens received to sender
-      ERC20(_destination).transfer(msg.sender, receivedAmount);
+      ERC20(_destination).transfer(_receiver, receivedAmount);
     }
 
     // After the trade, any _source that exchangePortal holds will be sent back to msg.sender
@@ -87,9 +92,9 @@ contract ConvertPortal {
     // Check if we hold a positive amount of _source
     if (endAmount > 0) {
       if (_source == ETH_TOKEN_ADDRESS) {
-        (msg.sender).transfer(endAmount);
+        (_receiver).transfer(endAmount);
       } else {
-        ERC20(_source).transfer(msg.sender, endAmount);
+        ERC20(_source).transfer(_receiver, endAmount);
       }
     }
   }

@@ -8,7 +8,7 @@ contract SmartFundInterface {
   mapping (address => uint256) public addressToShares;
   // sends percentage of fund tokens to the user
   // function withdraw() external;
-  function withdraw(uint256 _percentageWithdraw) external;
+  function withdraw(uint256 _percentageWithdraw, bool _convert) external;
 
   // for smart fund owner to trade tokens
   function trade(
@@ -39,5 +39,5 @@ contract SmartFundInterface {
   // calculates the number of shares a buyer will receive for depositing `amount` of ether
   function calculateDepositToShares(uint256 _amount) public view returns (uint256);
 
-  function fundManagerWithdraw() public;
+  function fundManagerWithdraw(bool _convert) public;
 }

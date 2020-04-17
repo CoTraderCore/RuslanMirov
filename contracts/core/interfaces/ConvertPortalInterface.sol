@@ -1,5 +1,10 @@
 contract ConvertPortalInterface {
-  function convert(address _source, uint256 _sourceAmount, address _destination)
+  function convert(
+    address _source,
+    uint256 _sourceAmount,
+    address _destination,
+    address _receiver
+    )
     external
     payable;
 }
