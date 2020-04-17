@@ -50,7 +50,8 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
     _permittedPoolsAddress,
     _poolPortalAddress,
     _convertPortalAddress,
-    _cEther
+    _cEther,
+    address(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee)
   )
   public{}
 

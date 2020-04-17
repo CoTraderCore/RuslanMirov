@@ -62,7 +62,8 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
     _permittedPoolsAddress,
     _poolPortalAddress,
     _convertPortalAddress,
-    _cEther
+    _cEther,
+    _stableCoinAddress
   )
   public {
     // Initial stable coint interface

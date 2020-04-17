@@ -102,6 +102,9 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   // COMPOUND ETH wrapper address
   address public cEther;
 
+  // for ETH and USD fund this asset different
+  address public coreFundAsset;
+
   // how many shares belong to each address
   mapping (address => uint256) public addressToShares;
 
@@ -126,7 +129,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
 
   constructor(
     address _owner,
-    string _name,
+    string  _name,
     uint256 _successFee,
     uint256 _platformFee,
     address _platformAddress,
@@ -135,7 +138,8 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     address _permittedPoolsAddress,
     address _poolPortalAddress,
     address _convertPortalAddress,
-    address _cEther
+    address _cEther,
+    address _coreFundAsset
   )public{
     // never allow a 100% fee
     require(_successFee < TOTAL_PERCENTAGE);
@@ -170,6 +174,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     convertPortal = ConvertPortalInterface(_convertPortalAddress);
 
     cEther = _cEther;
+    coreFundAsset = _coreFundAsset;
 
     emit SmartFundCreated(owner);
   }
@@ -202,33 +207,56 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
 
       // Transfer ERC20 to _withdrawAddress
       for(uint8 j = 0; j < _withdrawAddress.length; j++){
+        // calculate withdraw ERC20 share
         uint256 payoutAmount = fundAmount.mul(_mul[j]).div(_div[j]);
-        // Try convert ERC20 to ETH
+        // Check if need convert ERC20 to fund core asset
         if(_convert){
-          tryConvert(
+          // Convert ERC20
+          tryConvertToCoreAsset(
             address(token),
             payoutAmount,
-            ETH_TOKEN_ADDRESS,
+            coreFundAsset,
             _withdrawAddress[j]
           );
         }else{
+          // Just withdarw ERC20
           token.transfer(_withdrawAddress[j], payoutAmount);
         }
       }
     }
-     uint256 etherBalance = address(this).balance;
-     // Transfer ETH to _withdrawAddress
-     for(uint8 k = 0; k < _withdrawAddress.length; k++){
-       uint256 etherPayoutAmount = (etherBalance).mul(_mul[k]).div(_div[k]);
-       _withdrawAddress[k].transfer(etherPayoutAmount);
-     }
+    // Transfer ETH to _withdrawAddress
+    uint256 etherBalance = address(this).balance;
+    for(uint8 k = 0; k < _withdrawAddress.length; k++){
+      // calculate withdraw ETH share
+      uint256 etherPayoutAmount = (etherBalance).mul(_mul[k]).div(_div[k]);
+
+      // Check if need convert ETH to fund core asset
+      if(_convert && coreFundAsset != address(ETH_TOKEN_ADDRESS)){
+        // Convert ETH
+        tryConvertToCoreAsset(
+         address(ETH_TOKEN_ADDRESS),
+         etherPayoutAmount,
+         coreFundAsset,
+         _withdrawAddress[k]
+        );
+      }else{
+        // Just withdarw ETH
+        _withdrawAddress[k].transfer(etherPayoutAmount);
+      }
+    }
   }
 
-
-  function tryConvert(address _source, uint256 _amount, address _destanation, address _receiver)
+  // helper which try convert input asset to core fund asset (ETH or USD)
+  function tryConvertToCoreAsset(
+    address _source,
+    uint256 _amount,
+    address _destanation,
+    address _receiver
+  )
     private
   {
     // check if can be converted
+    // this is an analogue of try catch for version 4.24
     (bool success) = address(convertPortal).call(
     abi.encodeWithSelector(convertPortal.convert.selector,
       _source,
@@ -238,7 +266,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     );
 
     if(success){
-      // convert to ETH
+      // convert to core fund asset
       convertPortal.convert(
         _source,
         _amount,
@@ -246,8 +274,12 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
         _receiver
       );
     }else{
-      // withdarw origin
-      ERC20(_source).transfer(_receiver, _amount);
+      // withdarw without convert
+      if(_source == address(ETH_TOKEN_ADDRESS)){
+        _receiver.transfer(_amount);
+      }else{
+        ERC20(_source).transfer(_receiver, _amount);
+      }
     }
   }
 
