@@ -9,7 +9,7 @@ pragma solidity ^0.4.24;
 * so we mark type for new token once after success convert
 */
 
-import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../../zeppelin-solidity/contracts/access/Ownable.sol";
 
 contract TokensTypeStorage is Ownable {
   // check if token alredy registred

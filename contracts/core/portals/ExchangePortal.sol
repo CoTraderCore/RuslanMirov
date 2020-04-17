@@ -8,7 +8,7 @@ pragma solidity ^0.4.24;
   Also get ratio for Bancor and Uniswap pools, Syntetix and Compound assets
 */
 
-import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../../zeppelin-solidity/contracts/access/Ownable.sol";
 import "../../zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../zeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
 
