@@ -131,7 +131,7 @@ contract ConvertPortal {
           "0x"
         );
       }
-      // Convert ERC20 
+      // Convert ERC20
       else{
         ERC20(underlyingAddress).approve(address(exchangePortal), underlyingAmount);
         destAmount = exchangePortal.trade(
@@ -158,9 +158,10 @@ contract ConvertPortal {
   {
     // sell pool
     _transferFromSenderAndApproveTo(ERC20(_source), _sourceAmount, address(poolPortal));
+
     poolPortal.sellPool(
-      1, // type Uniswap
       _sourceAmount,
+      1, // type Uniswap
       ERC20(_source)
     );
 
