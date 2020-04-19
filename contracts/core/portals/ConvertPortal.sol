@@ -104,6 +104,9 @@ contract ConvertPortal {
     private
     returns(uint256)
   {
+    // step 0 transfer compound asset from sender
+    ERC20(_source).transferFrom(msg.sender, address(this), _sourceAmount);
+    
     // step 1 convert cToken to underlying
     CToken(_source).redeem(_sourceAmount);
 

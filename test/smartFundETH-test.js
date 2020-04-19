@@ -1748,32 +1748,32 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     assert.equal(fromWei(userDAIBNTBalanceBeforeWithdarw), fromWei(userDAIBNTBalanceAfterWithdarw))
   })
 
-  // it('Correct convert CEther', async function() {
-  //     // NOTE: FOR TEST WITH USD FUND we should send USD Assets to excahnge
-  //     assert.equal(await cEther.balanceOf(smartFundETH.address), 0)
-  //     // deposit in fund
-  //     await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
-  //     // mint
-  //     await smartFundETH.compoundMint(toWei(String(1)), cEther.address)
-  //     // after mint recieved assets should be marked as COMPOUND
-  //     assert.equal(await tokensType.getType(cEther.address), TOKEN_KEY_COMPOUND)
-  //
-  //     const userCompoundEtherBalanceBeforeWithdarw = await cEther.balanceOf(userOne)
-  //     const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
-  //
-  //     await smartFundETH.withdraw(100, true)
-  //
-  //     const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
-  //     const userCompoundEtherBalanceAfterWithdarw = await cEther.balanceOf(userOne)
-  //
-  //     // user should receive his ETH back
-  //     assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
-  //     // user should NOT receive CompoundEther token
-  //     assert.equal(
-  //       fromWei(userCompoundEtherBalanceBeforeWithdarw),
-  //       fromWei(userCompoundEtherBalanceAfterWithdarw)
-  //     )
-  // })
+  it('Correct convert CEther', async function() {
+      // NOTE: FOR TEST WITH USD FUND we should send USD Assets to excahnge
+      assert.equal(await cEther.balanceOf(smartFundETH.address), 0)
+      // deposit in fund
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
+      // mint
+      await smartFundETH.compoundMint(toWei(String(1)), cEther.address)
+      // after mint recieved assets should be marked as COMPOUND
+      assert.equal(await tokensType.getType(cEther.address), TOKEN_KEY_COMPOUND)
+
+      const userCompoundEtherBalanceBeforeWithdarw = await cEther.balanceOf(userOne)
+      const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
+
+      await smartFundETH.withdraw(100, true)
+
+      const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
+      const userCompoundEtherBalanceAfterWithdarw = await cEther.balanceOf(userOne)
+
+      // user should receive his ETH back
+      assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
+      // user should NOT receive CompoundEther token
+      assert.equal(
+        fromWei(userCompoundEtherBalanceBeforeWithdarw),
+        fromWei(userCompoundEtherBalanceAfterWithdarw)
+      )
+  })
 
   })
   //END
