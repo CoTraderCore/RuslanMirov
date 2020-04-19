@@ -118,17 +118,34 @@ contract ConvertPortal {
 
     // step 3 convert underlying to destination if _destination != underlyingAddress
     if(_destination != underlyingAddress){
-      //convert via 1inch
-      uint256 destAmount = exchangePortal.trade(
-        ERC20(underlyingAddress),
-        underlyingAmount,
-        ERC20(_destination),
-        2,
-        BYTES32_EMPTY_ARRAY,
-        "0x"
-      );
+      uint256 destAmount = 0;
+      // convert via 1inch
+      // Convert ETH
+      if(underlyingAddress == ETH_TOKEN_ADDRESS){
+        destAmount = exchangePortal.trade.value(underlyingAmount)(
+          ERC20(underlyingAddress),
+          underlyingAmount,
+          ERC20(_destination),
+          2,
+          BYTES32_EMPTY_ARRAY,
+          "0x"
+        );
+      }
+      // Convert ERC20 
+      else{
+        ERC20(underlyingAddress).approve(address(exchangePortal), underlyingAmount);
+        destAmount = exchangePortal.trade(
+          ERC20(underlyingAddress),
+          underlyingAmount,
+          ERC20(_destination),
+          2,
+          BYTES32_EMPTY_ARRAY,
+          "0x"
+        );
+      }
       return destAmount;
-    }else{
+    }
+    else{
       return underlyingAmount;
     }
 

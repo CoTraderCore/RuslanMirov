@@ -192,8 +192,8 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   *
   */
   function _withdraw(
-    uint256[] _mul,
-    uint256[] _div,
+    uint256[] memory _mul,
+    uint256[] memory _div,
     address[] memory _withdrawAddress,
     bool _convert
     )

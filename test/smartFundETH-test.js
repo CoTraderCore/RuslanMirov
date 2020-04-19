@@ -1567,6 +1567,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         }
       )
 
+      assert.equal(await tokensType.getType(xxxERC.address), TOKEN_KEY_CRYPTOCURRENCY)
+
       assert.equal(fromWei(await web3.eth.getBalance(exchangePortal.address)), 1)
       const userXXXBalanceBeforeWithdarw = await xxxERC.balanceOf(userOne)
       const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
@@ -1580,9 +1582,147 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
       // user should NOT receive xxx token
       assert.equal(fromWei(userXXXBalanceBeforeWithdarw), fromWei(userXXXBalanceAfterWithdarw))
-
-
     })
+
+    it('correct convert SYNTHETIX', async function() {
+      // deploy smartFund with 10% success fee
+      await deployContracts(1000, 0)
+      // give exchange portal contract 1 syntetix USD
+      await sUSD.transfer(exchangePortal.address, toWei(String(1)))
+      // deposit in fund
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
+
+      // change ETH to sUSD via type 0 (Paraswap)
+      // sUSD can be trade as CRYPTOCURRENCY
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        toWei(String(1)),
+        sUSD.address,
+        0,
+        [],
+        "0x",
+        toWei(String(1)),
+        {
+          from: userOne,
+        }
+      )
+
+      // check smart fund received sUSD and send ETH
+      assert.equal(await sUSD.balanceOf(smartFundETH.address), toWei(String(1)))
+      assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
+
+      // change sUSD to some SYNTHETIX asset (sETH for this case) via Synthetix (type 3)
+      await smartFundETH.trade(
+        sUSD.address,
+        toWei(String(1)),
+        sETH.address,
+        3,
+        [],
+        "0x",
+        toWei(String(1)),
+        {
+          from: userOne,
+        }
+      )
+
+      // Check Key after trade via Syntetix, recieved assets should be marked as SYNTHETIX
+      assert.equal(await tokensType.getType(sETH.address), TOKEN_KEY_SYNTHETIX)
+
+      // check smart fund received sETH and send sUSD
+      assert.equal(await sUSD.balanceOf(smartFundETH.address), 0)
+      assert.equal(await sETH.balanceOf(smartFundETH.address), toWei(String(1)))
+
+      const userSynthETHBalanceBeforeWithdarw = await sETH.balanceOf(userOne)
+      const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
+
+      await smartFundETH.withdraw(100, true)
+
+      const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
+      const userSynthETHBalanceAfterWithdarw = await sETH.balanceOf(userOne)
+
+      // user should receive his ETH back
+      assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
+      // user should NOT receive sETH token
+      assert.equal(fromWei(userSynthETHBalanceBeforeWithdarw), fromWei(userSynthETHBalanceAfterWithdarw))
+   })
+
+  //   it('correct convert UNI pool', async function() {
+  //     // send some ETH to exchange portal
+  //     await exchangePortal.pay({ from: userOne, value: toWei(String(10))})
+  //     await DAI.transfer(exchangePortal.address, toWei(String(10)))
+  //     // send some assets to pool portal
+  //     await DAI.transfer(poolPortal.address, toWei(String(10)))
+  //     await DAI.transfer(poolPortal.address, toWei(String(10)))
+  //     //await poolPortal.pay({ from: userOne, value: toWei(String(10))})
+  //
+  //     await smartFundETH.deposit({ from: userOne, value: toWei(String(2)) })
+  //
+  //     // get 1 DAI from exchange portal
+  //     await smartFundETH.trade(
+  //       ETH_TOKEN_ADDRESS,
+  //       toWei(String(1)),
+  //       DAI.address,
+  //       0,
+  //       [],
+  //       "0x",
+  //       1,
+  //       {
+  //         from: userOne,
+  //       }
+  //     )
+  //
+  //     // Check balance before buy pool
+  //     assert.equal(await DAI.balanceOf(smartFundETH.address), toWei(String(1)))
+  //     assert.equal(await DAIUNI.balanceOf(smartFundETH.address), 0)
+  //
+  //     // Buy UNI Pool
+  //     await smartFundETH.buyPool(toWei(String(1)), 1, DAIUNI.address)
+  //
+  //     assert.equal(await tokensType.getType(DAIUNI.address), TOKEN_KEY_UNISWAP_POOL)
+  //
+  //     const userDAIUNIBalanceBeforeWithdarw = await DAIUNI.balanceOf(userOne)
+  //     const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
+  //
+  //     await smartFundETH.withdraw(100, true)
+  //
+  //     assert.equal(await DAIUNI.balanceOf(userOne), 0)
+  //
+  //     const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
+  //     const userDAIUNIBalanceAfterWithdarw = await DAIUNI.balanceOf(userOne)
+  //
+  //     // user should receive his ETH back
+  //     assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
+  //     // user should NOT receive DAIUNI token
+  //     assert.equal(fromWei(userDAIUNIBalanceBeforeWithdarw), fromWei(userDAIUNIBalanceAfterWithdarw))
+  // })
+
+  // it('Fund Manager can mint and reedem CEther', async function() {
+  //     // NOTE: FOR TEST WITH USD FUND we should send USD Assets to excahnge
+  //     assert.equal(await cEther.balanceOf(smartFundETH.address), 0)
+  //     // deposit in fund
+  //     await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
+  //     // mint
+  //     await smartFundETH.compoundMint(toWei(String(1)), cEther.address)
+  //     // after mint recieved assets should be marked as COMPOUND
+  //     assert.equal(await tokensType.getType(cEther.address), TOKEN_KEY_COMPOUND)
+  //
+  //     const userCompoundEtherBalanceBeforeWithdarw = await cEther.balanceOf(userOne)
+  //     const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
+  //
+  //     await smartFundETH.withdraw(100, true)
+  //
+  //     const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
+  //     const userCompoundEtherBalanceAfterWithdarw = await cEther.balanceOf(userOne)
+  //
+  //     // user should receive his ETH back
+  //     assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
+  //     // user should NOT receive CompoundEther token
+  //     assert.equal(
+  //       fromWei(userCompoundEtherBalanceBeforeWithdarw),
+  //       fromWei(userCompoundEtherBalanceAfterWithdarw)
+  //     )
+  // })
+
   })
   //END
 })
