@@ -1648,11 +1648,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
     it('correct convert UNI pool', async function() {
       // send some ETH to exchange portal
-      await exchangePortal.pay({ from: userOne, value: toWei(String(10))})
-      await DAI.transfer(exchangePortal.address, toWei(String(10)))
-      // send some assets to pool portal
-      await DAI.transfer(poolPortal.address, toWei(String(10)))
-      await poolPortal.pay({ from: userOne, value: toWei(String(10))})
+      await exchangePortal.pay({ from: userOne, value: toWei(String(5))})
+      await DAI.transfer(exchangePortal.address, toWei(String(5)))
 
       await smartFundETH.deposit({ from: userOne, value: toWei(String(2)) })
 
@@ -1684,8 +1681,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
       await smartFundETH.withdraw(100, true)
 
-      assert.equal(await DAIUNI.balanceOf(userOne), 0)
-
       const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
       const userDAIUNIBalanceAfterWithdarw = await DAIUNI.balanceOf(userOne)
 
@@ -1693,6 +1688,64 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
       // user should NOT receive DAIUNI token
       assert.equal(fromWei(userDAIUNIBalanceBeforeWithdarw), fromWei(userDAIUNIBalanceAfterWithdarw))
+  })
+
+  it('correct convert Bancor pool', async function() {
+    // send some assets to pool portal
+    await BNT.transfer(exchangePortal.address, toWei(String(1)))
+    await DAI.transfer(exchangePortal.address, toWei(String(1)))
+
+    await smartFundETH.deposit({ from: userOne, value: toWei(String(2)) })
+
+    // get 1 BNT from exchange portal
+    await smartFundETH.trade(
+      ETH_TOKEN_ADDRESS,
+      toWei(String(1)),
+      BNT.address,
+      0,
+      [],
+      "0x",
+      1,
+      {
+        from: userOne,
+      }
+    )
+
+    // get 1 DAI from exchange portal
+    await smartFundETH.trade(
+      ETH_TOKEN_ADDRESS,
+      toWei(String(1)),
+      DAI.address,
+      0,
+      [],
+      "0x",
+      1,
+      {
+        from: userOne,
+      }
+    )
+    // Check balance before buy pool
+    assert.equal(await BNT.balanceOf(smartFundETH.address), toWei(String(1)))
+    assert.equal(await DAI.balanceOf(smartFundETH.address), toWei(String(1)))
+    assert.equal(await DAIBNT.balanceOf(smartFundETH.address), 0)
+
+    // buy BNT pool
+    await smartFundETH.buyPool(toWei(String(2)), 0, DAIBNT.address)
+    // after buy BNT pool recieved asset should be marked as BANCOR POOL
+    assert.equal(await tokensType.getType(DAIBNT.address), TOKEN_KEY_BANCOR_POOL)
+
+    const userDAIBNTBalanceBeforeWithdarw = await DAIBNT.balanceOf(userOne)
+    const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
+
+    await smartFundETH.withdraw(100, true)
+
+    const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
+    const userDAIBNTBalanceAfterWithdarw = await DAIBNT.balanceOf(userOne)
+
+    // user should receive his ETH back
+    assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
+    // user should NOT receive DAIUNI token
+    assert.equal(fromWei(userDAIBNTBalanceBeforeWithdarw), fromWei(userDAIBNTBalanceAfterWithdarw))
   })
 
   // it('Correct convert CEther', async function() {
