@@ -1735,12 +1735,8 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
 
    it('correct convert UNI pool', async function() {
       // send some assets to exchange portal
-      await exchangePortal.pay({ from: userOne, value: toWei(String(25))})
-      await DAI.transfer(exchangePortal.address, toWei(String(25)))
-
-      // send some assets to pool portal
-      await poolPortal.pay({ from: userOne, value: toWei(String(4))})
-      await DAI.transfer(poolPortal.address, toWei(String(4)))
+      await exchangePortal.pay({ from: userOne, value: toWei(String(10))})
+      await DAI.transfer(exchangePortal.address, toWei(String(10)))
 
       await DAI.approve(smartFundUSD.address, toWei(String(2)), { from: userOne })
       await smartFundUSD.deposit(toWei(String(2)), { from: userOne })
@@ -1786,64 +1782,56 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       // user should NOT receive DAIUNI token
       assert.equal(fromWei(userDAIUNIBalanceBeforeWithdarw), fromWei(userDAIUNIBalanceAfterWithdarw))
   })
-  //
-  // it('correct convert Bancor pool', async function() {
-  //   // send some assets to pool portal
-  //   await BNT.transfer(exchangePortal.address, toWei(String(1)))
-  //   await DAI.transfer(exchangePortal.address, toWei(String(1)))
-  //
-  //   await smartFundUSD.deposit({ from: userOne, value: toWei(String(2)) })
-  //
-  //   // get 1 BNT from exchange portal
-  //   await smartFundUSD.trade(
-  //     ETH_TOKEN_ADDRESS,
-  //     toWei(String(1)),
-  //     BNT.address,
-  //     0,
-  //     [],
-  //     "0x",
-  //     1,
-  //     {
-  //       from: userOne,
-  //     }
-  //   )
-  //
-  //   // get 1 DAI from exchange portal
-  //   await smartFundUSD.trade(
-  //     ETH_TOKEN_ADDRESS,
-  //     toWei(String(1)),
-  //     DAI.address,
-  //     0,
-  //     [],
-  //     "0x",
-  //     1,
-  //     {
-  //       from: userOne,
-  //     }
-  //   )
-  //   // Check balance before buy pool
-  //   assert.equal(await BNT.balanceOf(smartFundUSD.address), toWei(String(1)))
-  //   assert.equal(await DAI.balanceOf(smartFundUSD.address), toWei(String(1)))
-  //   assert.equal(await DAIBNT.balanceOf(smartFundUSD.address), 0)
-  //
-  //   // buy BNT pool
-  //   await smartFundUSD.buyPool(toWei(String(2)), 0, DAIBNT.address)
-  //   // after buy BNT pool recieved asset should be marked as BANCOR POOL
-  //   assert.equal(await tokensType.getType(DAIBNT.address), TOKEN_KEY_BANCOR_POOL)
-  //
-  //   const userDAIBNTBalanceBeforeWithdarw = await DAIBNT.balanceOf(userOne)
-  //   const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
-  //
-  //   await smartFundUSD.withdraw(100, true)
-  //
-  //   const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
-  //   const userDAIBNTBalanceAfterWithdarw = await DAIBNT.balanceOf(userOne)
-  //
-  //   // user should receive his ETH back
-  //   assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
-  //   // user should NOT receive DAIUNI token
-  //   assert.equal(fromWei(userDAIBNTBalanceBeforeWithdarw), fromWei(userDAIBNTBalanceAfterWithdarw))
-  // })
+
+  it('correct convert Bancor pool', async function() {
+    // send some assets to exchange portal
+    await BNT.transfer(exchangePortal.address, toWei(String(10)))
+    await exchangePortal.pay({ from: userOne, value: toWei(String(10))})
+
+    // deposit
+    await DAI.approve(smartFundUSD.address, toWei(String(2)), { from: userOne })
+    await smartFundUSD.deposit(toWei(String(2)), { from: userOne })
+
+    // get 1 BNT from exchange portal
+    await smartFundUSD.trade(
+      DAI.address,
+      toWei(String(1)),
+      BNT.address,
+      0,
+      [],
+      "0x",
+      1,
+      {
+        from: userOne,
+      }
+    )
+
+    // Check balance before buy pool
+    assert.equal(await BNT.balanceOf(smartFundUSD.address), toWei(String(1)))
+    assert.equal(await DAI.balanceOf(smartFundUSD.address), toWei(String(1)))
+    assert.equal(await DAIBNT.balanceOf(smartFundUSD.address), 0)
+
+    // buy BNT pool
+    await smartFundUSD.buyPool(toWei(String(1)), 0, DAIBNT.address)
+
+    // after buy BNT pool recieved asset should be marked as BANCOR POOL
+    assert.equal(await tokensType.getType(BNT.address), TOKEN_KEY_CRYPTOCURRENCY)
+    assert.equal(await tokensType.getType(DAI.address), TOKEN_KEY_CRYPTOCURRENCY)
+    assert.equal(await tokensType.getType(DAIBNT.address), TOKEN_KEY_BANCOR_POOL)
+
+    const userDAIBNTBalanceBeforeWithdarw = await DAIBNT.balanceOf(userOne)
+    const userUSDBalanceBeforeWithdarw = await DAI.balanceOf(userOne)
+
+    await smartFundUSD.withdraw(100, true)
+
+    const userUSDBalanceAfterWithdarw = await DAI.balanceOf(userOne)
+    const userDAIBNTBalanceAfterWithdarw = await DAIBNT.balanceOf(userOne)
+
+    // user should receive his ETH back
+    assert.isTrue(fromWei(userUSDBalanceAfterWithdarw) > fromWei(userUSDBalanceBeforeWithdarw))
+    // user should NOT receive DAIUNI token
+    assert.equal(fromWei(userDAIBNTBalanceBeforeWithdarw), fromWei(userDAIBNTBalanceAfterWithdarw))
+  })
   //
   // it('Correct convert CEther', async function() {
   //     // NOTE: FOR TEST WITH USD FUND we should send USD Assets to excahnge
