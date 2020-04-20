@@ -177,16 +177,18 @@ contract ConvertPortal {
     address ERCConnector = poolPortal.getTokenByUniswapExchange(_source);
     uint256 ERCAmount = ERC20(ERCConnector).balanceOf(address(this));
 
-    // convert ERC20 connector via 1inch
-    ERC20(ERCConnector).approve(address(exchangePortal), ERCAmount);
-    exchangePortal.trade(
-      ERC20(ERCConnector),
-      ERCAmount,
-      ERC20(_destination),
-      2, // type 1inch
-      BYTES32_EMPTY_ARRAY,
-      "0x"
-    );
+    // convert ERC20 connector via 1inch if destination != ERC20 connector
+    if(ERCConnector != _destination){
+      ERC20(ERCConnector).approve(address(exchangePortal), ERCAmount);
+      exchangePortal.trade(
+        ERC20(ERCConnector),
+        ERCAmount,
+        ERC20(_destination),
+        2, // type 1inch
+        BYTES32_EMPTY_ARRAY,
+        "0x"
+      );
+    }
 
     // if destanation != ETH, convert ETH also
     if(_destination != ETH_TOKEN_ADDRESS){
