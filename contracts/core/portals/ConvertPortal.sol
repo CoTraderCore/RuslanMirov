@@ -77,7 +77,7 @@ contract ConvertPortal {
     }
     else {
       // Unknown type
-      revert();
+      revert("Unknown token type");
     }
 
     // send assets to _receiver
@@ -121,7 +121,7 @@ contract ConvertPortal {
 
     uint256 underlyingAmount = (_source == CEther)
     ? address(this).balance
-    : ERC20(_source).balanceOf(address(this));
+    : ERC20(underlyingAddress).balanceOf(address(this));
 
     // step 3 convert underlying to destination if _destination != underlyingAddress
     if(_destination != underlyingAddress){

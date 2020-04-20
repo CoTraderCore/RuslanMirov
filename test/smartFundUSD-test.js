@@ -1832,34 +1832,46 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     // user should NOT receive DAIUNI token
     assert.equal(fromWei(userDAIBNTBalanceBeforeWithdarw), fromWei(userDAIBNTBalanceAfterWithdarw))
   })
-  //
-  // it('Correct convert CEther', async function() {
-  //     // NOTE: FOR TEST WITH USD FUND we should send USD Assets to excahnge
-  //     assert.equal(await cEther.balanceOf(smartFundUSD.address), 0)
-  //     // deposit in fund
-  //     await smartFundUSD.deposit({ from: userOne, value: toWei(String(1)) })
-  //     // mint
-  //     await smartFundUSD.compoundMint(toWei(String(1)), cEther.address)
-  //     // after mint recieved assets should be marked as COMPOUND
-  //     assert.equal(await tokensType.getType(cEther.address), TOKEN_KEY_COMPOUND)
-  //
-  //     const userCompoundEtherBalanceBeforeWithdarw = await cEther.balanceOf(userOne)
-  //     const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
-  //
-  //     await smartFundUSD.withdraw(100, true)
-  //
-  //     const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
-  //     const userCompoundEtherBalanceAfterWithdarw = await cEther.balanceOf(userOne)
-  //
-  //     // user should receive his ETH back
-  //     assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
-  //     // user should NOT receive CompoundEther token
-  //     assert.equal(
-  //       fromWei(userCompoundEtherBalanceBeforeWithdarw),
-  //       fromWei(userCompoundEtherBalanceAfterWithdarw)
-  //     )
-  //   })
 
+  it('Correct convert CToken', async function() {
+    assert.equal(await cToken.balanceOf(smartFundUSD.address),  0)
+
+    // deposit
+    await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
+    await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
+
+    // mint cToken
+    await smartFundUSD.compoundMint(toWei(String(1)), cToken.address)
+
+    // fund recieve compound USD token
+    assert.equal(await cToken.balanceOf(smartFundUSD.address), toWei(String(1)))
+
+    // after mint recieved assets should be marked as COMPOUND
+    assert.equal(await tokensType.getType(cToken.address), TOKEN_KEY_COMPOUND)
+
+    // check balance before
+    const userCompoundUSDBalanceBeforeWithdarw = await cToken.balanceOf(userOne)
+    const userUSDBalanceBeforeWithdarw = await DAI.balanceOf(userOne)
+
+    // withdarw
+    await smartFundUSD.withdraw(100, true)
+
+    // check balance after
+    const userUSDBalanceAfterWithdarw = await DAI.balanceOf(userOne)
+    const userCompoundUSDBalanceAfterWithdarw = await cToken.balanceOf(userOne)
+
+    // fund sent assets
+    assert.equal(fromWei(await cToken.balanceOf(smartFundUSD.address)), 0)
+    assert.equal(await DAI.balanceOf(smartFundUSD.address), 0)
+
+    // user should receive his USD back
+    assert.isTrue(fromWei(userUSDBalanceAfterWithdarw) > fromWei(userUSDBalanceBeforeWithdarw))
+    // user should NOT receive CompoundEther token directly
+    assert.equal(
+      fromWei(userCompoundUSDBalanceBeforeWithdarw),
+      fromWei(userCompoundUSDBalanceAfterWithdarw)
+    )
+    })
   })
   // END
 })
