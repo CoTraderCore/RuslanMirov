@@ -1661,6 +1661,8 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
 
       await smartFundUSD.withdraw(100, true)
 
+      assert.equal(await xxxERC.balanceOf(smartFundUSD.address), 0)
+
       const userUSDBalanceAfterWithdarw = await DAI.balanceOf(userOne)
       const userXXXBalanceAfterWithdarw = await xxxERC.balanceOf(userOne)
 
@@ -1724,6 +1726,8 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
 
       await smartFundUSD.withdraw(100, true)
 
+      assert.equal(await sETH.balanceOf(smartFundUSD.address), 0)
+
       const userUSDBalanceAfterWithdarw = await DAI.balanceOf(userOne)
       const userSynthETHBalanceAfterWithdarw = await sETH.balanceOf(userOne)
 
@@ -1771,6 +1775,9 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       const userUSDBalanceBeforeWithdarw = await DAI.balanceOf(userOne)
 
       await smartFundUSD.withdraw(100, true)
+
+      // fund sent asset
+      assert.equal(await DAIUNI.balanceOf(smartFundUSD.address), 0)
 
       assert.equal(await DAIUNI.balanceOf(userOne), 0)
 
@@ -1823,6 +1830,9 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     const userUSDBalanceBeforeWithdarw = await DAI.balanceOf(userOne)
 
     await smartFundUSD.withdraw(100, true)
+
+    // fund sent asset
+    assert.equal(await DAIBNT.balanceOf(smartFundUSD.address), 0)
 
     const userUSDBalanceAfterWithdarw = await DAI.balanceOf(userOne)
     const userDAIBNTBalanceAfterWithdarw = await DAIBNT.balanceOf(userOne)
