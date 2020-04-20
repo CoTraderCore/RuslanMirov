@@ -1665,67 +1665,68 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       assert.equal(fromWei(userXXXBalanceBeforeWithdarw), fromWei(userXXXBalanceAfterWithdarw))
     })
 
-  //   it('correct convert SYNTHETIX', async function() {
-  //     // deploy smartFund with 10% success fee
-  //     await deployContracts(1000, 0)
-  //     // give exchange portal contract 1 syntetix USD
-  //     await sUSD.transfer(exchangePortal.address, toWei(String(1)))
-  //     // deposit in fund
-  //     await smartFundUSD.deposit({ from: userOne, value: toWei(String(1)) })
-  //
-  //     // change ETH to sUSD via type 0 (Paraswap)
-  //     // sUSD can be trade as CRYPTOCURRENCY
-  //     await smartFundUSD.trade(
-  //       ETH_TOKEN_ADDRESS,
-  //       toWei(String(1)),
-  //       sUSD.address,
-  //       0,
-  //       [],
-  //       "0x",
-  //       toWei(String(1)),
-  //       {
-  //         from: userOne,
-  //       }
-  //     )
-  //
-  //     // check smart fund received sUSD and send ETH
-  //     assert.equal(await sUSD.balanceOf(smartFundUSD.address), toWei(String(1)))
-  //     assert.equal(await web3.eth.getBalance(smartFundUSD.address), 0)
-  //
-  //     // change sUSD to some SYNTHETIX asset (sETH for this case) via Synthetix (type 3)
-  //     await smartFundUSD.trade(
-  //       sUSD.address,
-  //       toWei(String(1)),
-  //       sETH.address,
-  //       3,
-  //       [],
-  //       "0x",
-  //       toWei(String(1)),
-  //       {
-  //         from: userOne,
-  //       }
-  //     )
-  //
-  //     // Check Key after trade via Syntetix, recieved assets should be marked as SYNTHETIX
-  //     assert.equal(await tokensType.getType(sETH.address), TOKEN_KEY_SYNTHETIX)
-  //
-  //     // check smart fund received sETH and send sUSD
-  //     assert.equal(await sUSD.balanceOf(smartFundUSD.address), 0)
-  //     assert.equal(await sETH.balanceOf(smartFundUSD.address), toWei(String(1)))
-  //
-  //     const userSynthETHBalanceBeforeWithdarw = await sETH.balanceOf(userOne)
-  //     const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
-  //
-  //     await smartFundUSD.withdraw(100, true)
-  //
-  //     const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
-  //     const userSynthETHBalanceAfterWithdarw = await sETH.balanceOf(userOne)
-  //
-  //     // user should receive his ETH back
-  //     assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
-  //     // user should NOT receive sETH token
-  //     assert.equal(fromWei(userSynthETHBalanceBeforeWithdarw), fromWei(userSynthETHBalanceAfterWithdarw))
-  //  })
+    it('correct convert SYNTHETIX', async function() {
+      // deploy smartFund with 10% success fee
+      await deployContracts(1000, 0)
+      // give exchange portal contract 1 syntetix USD
+      await sUSD.transfer(exchangePortal.address, toWei(String(1)))
+
+      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
+
+      // change ETH to sUSD via type 0 (Paraswap)
+      // sUSD can be trade as CRYPTOCURRENCY
+      await smartFundUSD.trade(
+        DAI.address,
+        toWei(String(1)),
+        sUSD.address,
+        0,
+        [],
+        "0x",
+        toWei(String(1)),
+        {
+          from: userOne,
+        }
+      )
+
+      // check smart fund received sUSD and send ETH
+      assert.equal(await sUSD.balanceOf(smartFundUSD.address), toWei(String(1)))
+      assert.equal(await DAI.balanceOf(smartFundUSD.address), 0)
+
+      // change sUSD to some SYNTHETIX asset (sETH for this case) via Synthetix (type 3)
+      await smartFundUSD.trade(
+        sUSD.address,
+        toWei(String(1)),
+        sETH.address,
+        3,
+        [],
+        "0x",
+        toWei(String(1)),
+        {
+          from: userOne,
+        }
+      )
+
+      // Check Key after trade via Syntetix, recieved assets should be marked as SYNTHETIX
+      assert.equal(await tokensType.getType(sETH.address), TOKEN_KEY_SYNTHETIX)
+
+      // check smart fund received sETH and send sUSD
+      assert.equal(await sUSD.balanceOf(smartFundUSD.address), 0)
+      assert.equal(await sETH.balanceOf(smartFundUSD.address), toWei(String(1)))
+
+      const userSynthETHBalanceBeforeWithdarw = await sETH.balanceOf(userOne)
+      const userUSDBalanceBeforeWithdarw = await DAI.balanceOf(userOne)
+
+      await smartFundUSD.withdraw(100, true)
+
+      const userUSDBalanceAfterWithdarw = await DAI.balanceOf(userOne)
+      const userSynthETHBalanceAfterWithdarw = await sETH.balanceOf(userOne)
+
+      // user should receive his ETH back
+      assert.isTrue(fromWei(userUSDBalanceAfterWithdarw) > fromWei(userUSDBalanceBeforeWithdarw))
+      // user should NOT receive sETH token
+      assert.equal(fromWei(userSynthETHBalanceBeforeWithdarw), fromWei(userSynthETHBalanceAfterWithdarw))
+   })
   //
   //   it('correct convert UNI pool', async function() {
   //     // send some ETH to exchange portal
@@ -1855,6 +1856,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
   //       fromWei(userCompoundEtherBalanceAfterWithdarw)
   //     )
   //   })
-  // })
+
+  })
   // END
 })
