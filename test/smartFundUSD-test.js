@@ -1739,8 +1739,8 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       await DAI.transfer(exchangePortal.address, toWei(String(25)))
 
       // send some assets to pool portal
-      await poolPortal.pay({ from: userOne, value: toWei(String(25))})
-      await DAI.transfer(poolPortal.address, toWei(String(25)))
+      await poolPortal.pay({ from: userOne, value: toWei(String(4))})
+      await DAI.transfer(poolPortal.address, toWei(String(4)))
 
       await DAI.approve(smartFundUSD.address, toWei(String(2)), { from: userOne })
       await smartFundUSD.deposit(toWei(String(2)), { from: userOne })
@@ -1769,6 +1769,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
 
       assert.equal(await tokensType.getType(DAIUNI.address), TOKEN_KEY_UNISWAP_POOL)
       assert.equal(await tokensType.getType(DAI.address), TOKEN_KEY_CRYPTOCURRENCY)
+      assert.equal(await tokensType.getType(ETH_TOKEN_ADDRESS), TOKEN_KEY_CRYPTOCURRENCY)
 
       const userDAIUNIBalanceBeforeWithdarw = await DAIUNI.balanceOf(userOne)
       const userUSDBalanceBeforeWithdarw = await DAI.balanceOf(userOne)

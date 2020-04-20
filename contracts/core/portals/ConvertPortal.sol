@@ -54,6 +54,10 @@ contract ConvertPortal {
     external
     payable
   {
+    // no need continue convert for not correct input data
+    if(_sourceAmount <= 0 || _source == _destination)
+      return;
+
     uint256 receivedAmount = 0;
     // convert assets
     if(tokensTypes.getType(_source) == bytes32("CRYPTOCURRENCY")){
