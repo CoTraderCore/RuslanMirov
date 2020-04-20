@@ -27,10 +27,31 @@ contract TokensTypeStorage is Ownable {
     _;
   }
 
+  // allow add new token type from trade portals
   function addNewTokenType(address _token, string _type) public onlyPermitted {
+    // Don't add if alredy registred
+    if(isRegistred[_token])
+      return;
+
+    // Add
     getType[_token] = stringToBytes32(_type);
     isRegistred[_token] = true;
     allTypes.push(_type);
+  }
+
+
+  // allow update token type from owner wallet
+  function setTokenTypeAsOwner(address _token, string _type) public onlyOwner{
+    // get previos type
+    bytes32 prevType = getType[_token];
+
+    // Update type
+    getType[_token] = stringToBytes32(_type);
+    isRegistred[_token] = true;
+
+    // if new type unique add it to the list
+    if(stringToBytes32(_type) != prevType)
+       allTypes.push(_type);
   }
 
   function addNewPermittedAddress(address _permitted) public onlyOwner {

@@ -106,7 +106,7 @@ contract ConvertPortal {
   {
     // step 0 transfer compound asset from sender
     ERC20(_source).transferFrom(msg.sender, address(this), _sourceAmount);
-    
+
     // step 1 convert cToken to underlying
     CToken(_source).redeem(_sourceAmount);
 
@@ -255,17 +255,28 @@ contract ConvertPortal {
     private
     returns(uint256)
   {
-    _transferFromSenderAndApproveTo(ERC20(_source), _sourceAmount, address(exchangePortal));
     // Convert crypto via 1inch aggregator
-    uint256 destAmount = exchangePortal.trade(
-      ERC20(_source),
-      _sourceAmount,
-      ERC20(_destination),
-      2,
-      BYTES32_EMPTY_ARRAY,
-      "0x"
-    );
-
+    uint256 destAmount = 0;
+    if(_source == ETH_TOKEN_ADDRESS){
+      destAmount = exchangePortal.trade.value(_sourceAmount)(
+        ERC20(_source),
+        _sourceAmount,
+        ERC20(_destination),
+        2,
+        BYTES32_EMPTY_ARRAY,
+        "0x"
+      );
+    }else{
+      _transferFromSenderAndApproveTo(ERC20(_source), _sourceAmount, address(exchangePortal));
+      destAmount = exchangePortal.trade(
+        ERC20(_source),
+        _sourceAmount,
+        ERC20(_destination),
+        2,
+        BYTES32_EMPTY_ARRAY,
+        "0x"
+      );
+    }
     return destAmount;
   }
 

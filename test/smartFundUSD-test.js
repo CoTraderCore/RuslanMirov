@@ -168,6 +168,10 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     // Deploy tokens type storage
     tokensType = await TokensTypeStorage.new()
 
+    // Mark DAI as CRYPTOCURRENCY, because we recieve this token,
+    // without trade, but via deposit
+    await tokensType.setTokenTypeAsOwner(DAI.address, "CRYPTOCURRENCY")
+
     // Deploy exchangePortal
     exchangePortal = await ExchangePortalMock.new(
       1,
@@ -1625,7 +1629,8 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
   })
 
   describe('Convert withdarwed assets to core fund asset', function() {
-    it('correct convert CRYPTOCURRENCY', async function() {
+
+   it('correct convert CRYPTOCURRENCY', async function() {
       // deploy smartFund with 10% success fee
       await deployContracts(1000, 0)
       // give exchange portal contract some money
@@ -1665,7 +1670,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       assert.equal(fromWei(userXXXBalanceBeforeWithdarw), fromWei(userXXXBalanceAfterWithdarw))
     })
 
-    it('correct convert SYNTHETIX', async function() {
+   it('correct convert SYNTHETIX', async function() {
       // deploy smartFund with 10% success fee
       await deployContracts(1000, 0)
       // give exchange portal contract 1 syntetix USD
@@ -1727,50 +1732,59 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       // user should NOT receive sETH token
       assert.equal(fromWei(userSynthETHBalanceBeforeWithdarw), fromWei(userSynthETHBalanceAfterWithdarw))
    })
-  //
-  //   it('correct convert UNI pool', async function() {
-  //     // send some ETH to exchange portal
-  //     await exchangePortal.pay({ from: userOne, value: toWei(String(5))})
-  //     await DAI.transfer(exchangePortal.address, toWei(String(5)))
-  //
-  //     await smartFundUSD.deposit({ from: userOne, value: toWei(String(2)) })
-  //
-  //     // get 1 DAI from exchange portal
-  //     await smartFundUSD.trade(
-  //       ETH_TOKEN_ADDRESS,
-  //       toWei(String(1)),
-  //       DAI.address,
-  //       0,
-  //       [],
-  //       "0x",
-  //       1,
-  //       {
-  //         from: userOne,
-  //       }
-  //     )
-  //
-  //     // Check balance before buy pool
-  //     assert.equal(await DAI.balanceOf(smartFundUSD.address), toWei(String(1)))
-  //     assert.equal(await DAIUNI.balanceOf(smartFundUSD.address), 0)
-  //
-  //     // Buy UNI Pool
-  //     await smartFundUSD.buyPool(toWei(String(1)), 1, DAIUNI.address)
-  //
-  //     assert.equal(await tokensType.getType(DAIUNI.address), TOKEN_KEY_UNISWAP_POOL)
-  //
-  //     const userDAIUNIBalanceBeforeWithdarw = await DAIUNI.balanceOf(userOne)
-  //     const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
-  //
-  //     await smartFundUSD.withdraw(100, true)
-  //
-  //     const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
-  //     const userDAIUNIBalanceAfterWithdarw = await DAIUNI.balanceOf(userOne)
-  //
-  //     // user should receive his ETH back
-  //     assert.isTrue(fromWei(userETHBalanceAfterWithdarw) > fromWei(userETHBalanceBeforeWithdarw))
-  //     // user should NOT receive DAIUNI token
-  //     assert.equal(fromWei(userDAIUNIBalanceBeforeWithdarw), fromWei(userDAIUNIBalanceAfterWithdarw))
-  // })
+
+   it('correct convert UNI pool', async function() {
+      // send some assets to exchange portal
+      await exchangePortal.pay({ from: userOne, value: toWei(String(25))})
+      await DAI.transfer(exchangePortal.address, toWei(String(25)))
+
+      // send some assets to pool portal
+      await poolPortal.pay({ from: userOne, value: toWei(String(25))})
+      await DAI.transfer(poolPortal.address, toWei(String(25)))
+
+      await DAI.approve(smartFundUSD.address, toWei(String(2)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(2)), { from: userOne })
+
+      // get 1 ETH from exchange portal
+      await smartFundUSD.trade(
+        DAI.address,
+        toWei(String(1)),
+        ETH_TOKEN_ADDRESS,
+        0,
+        [],
+        "0x",
+        1,
+        {
+          from: userOne,
+        }
+      )
+
+      // Check balance before buy pool
+      assert.equal(await DAI.balanceOf(smartFundUSD.address), toWei(String(1)))
+      assert.equal(await web3.eth.getBalance(smartFundUSD.address), toWei(String(1)))
+      assert.equal(await DAIUNI.balanceOf(smartFundUSD.address), 0)
+
+      // Buy UNI Pool
+      await smartFundUSD.buyPool(toWei(String(1)), 1, DAIUNI.address)
+
+      assert.equal(await tokensType.getType(DAIUNI.address), TOKEN_KEY_UNISWAP_POOL)
+      assert.equal(await tokensType.getType(DAI.address), TOKEN_KEY_CRYPTOCURRENCY)
+
+      const userDAIUNIBalanceBeforeWithdarw = await DAIUNI.balanceOf(userOne)
+      const userUSDBalanceBeforeWithdarw = await DAI.balanceOf(userOne)
+
+      await smartFundUSD.withdraw(100, true)
+
+      assert.equal(await DAIUNI.balanceOf(userOne), 0)
+
+      const userUSDBalanceAfterWithdarw = await DAI.balanceOf(userOne)
+      const userDAIUNIBalanceAfterWithdarw = await DAIUNI.balanceOf(userOne)
+
+      // user should receive his USD back
+      assert.isTrue(fromWei(userUSDBalanceAfterWithdarw) > fromWei(userUSDBalanceBeforeWithdarw))
+      // user should NOT receive DAIUNI token
+      assert.equal(fromWei(userDAIUNIBalanceBeforeWithdarw), fromWei(userDAIUNIBalanceAfterWithdarw))
+  })
   //
   // it('correct convert Bancor pool', async function() {
   //   // send some assets to pool portal

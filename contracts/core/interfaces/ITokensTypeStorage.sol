@@ -8,4 +8,6 @@ contract ITokensTypeStorage {
   address public owner;
 
   function addNewTokenType(address _token, string _type) public;
+
+  function setTokenTypeAsOwner(address _token, string _type) public;
 }
