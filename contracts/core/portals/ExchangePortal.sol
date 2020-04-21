@@ -659,21 +659,44 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _to,
     uint256 _amount
   ) public view returns (uint256 value) {
-    // Check call
-    (bool success) = address(_from).call(
-    abi.encodeWithSelector(CToken(_from).exchangeRateCurrent.selector));
-    if(success){
-      // get underlying amount
-      uint256 rate = CToken(_from).exchangeRateCurrent();
-      uint256 underlyingAmount = _amount.mul(rate).div(1e18);
+    // get underlying amount by cToken amount
+    uint256 underlyingAmount = getCompoundUnderlyingRatio(
+      _from,
+      _amount
+    );
+    // convert underlying in _to
+    if(underlyingAmount > 0){
       // get underlying address
       address underlyingAddress = (_from == address(cEther))
       ? ETH_TOKEN_ADDRESS
       : CToken(_from).underlying();
-      // get rate for underlying
+      // get rate for underlying address via paraswap
       return getValueViaParaswap(underlyingAddress, _to, underlyingAmount);
     }
     else{
+      return 0;
+    }
+  }
+
+  // helper for get underlying amount by cToken amount
+  // NOTE: _from should be Compound token
+  function getCompoundUnderlyingRatio(
+    address _from,
+    uint256 _amount
+  )
+    public
+    view returns (uint256)
+  {
+    // Check call
+    (bool success) = address(_from).call(
+    abi.encodeWithSelector(CToken(_from).exchangeRateCurrent.selector));
+
+    if(success){
+      // get underlying amount by cToken amount
+      uint256 rate = CToken(_from).exchangeRateCurrent();
+      uint256 underlyingAmount = _amount.mul(rate).div(1e18);
+      return underlyingAmount;
+    }else{
       return 0;
     }
   }
