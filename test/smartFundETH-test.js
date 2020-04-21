@@ -167,6 +167,10 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     // Deploy tokens type storage
     tokensType = await TokensTypeStorage.new()
 
+    // Mark ETH as CRYPTOCURRENCY, because we recieve this token,
+    // without trade, but via deposit
+    await tokensType.setTokenTypeAsOwner(ETH_TOKEN_ADDRESS, "CRYPTOCURRENCY")
+
     // Deploy exchangePortal
     exchangePortal = await ExchangePortalMock.new(
       1,
