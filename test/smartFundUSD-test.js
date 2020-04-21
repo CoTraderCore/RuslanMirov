@@ -1798,9 +1798,10 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
   })
 
   it('correct convert Bancor pool', async function() {
+    assert.equal(fromWei(await DAIBNT.balanceOf(userOne)), 0)
     // send some assets to exchange portal
     await BNT.transfer(exchangePortal.address, toWei(String(10)))
-    await exchangePortal.pay({ from: userOne, value: toWei(String(10))})
+    await DAI.transfer(exchangePortal.address, toWei(String(10)))
 
     // deposit
     await DAI.approve(smartFundUSD.address, toWei(String(2)), { from: userOne })
@@ -1836,7 +1837,6 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     assert.equal(await tokensType.getType(DAI.address), TOKEN_KEY_CRYPTOCURRENCY)
     assert.equal(await tokensType.getType(DAIBNT.address), TOKEN_KEY_BANCOR_POOL)
 
-    const userDAIBNTBalanceBeforeWithdarw = await DAIBNT.balanceOf(userOne)
     const userUSDBalanceBeforeWithdarw = await DAI.balanceOf(userOne)
 
     await smartFundUSD.withdraw(0, true)
@@ -1845,16 +1845,15 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     assert.equal(await DAIBNT.balanceOf(smartFundUSD.address), 0)
 
     const userUSDBalanceAfterWithdarw = await DAI.balanceOf(userOne)
-    const userDAIBNTBalanceAfterWithdarw = await DAIBNT.balanceOf(userOne)
 
-    // user should receive his ETH back
+    // user should receive his USD back
     assert.isTrue(
       Number(fromWei(userUSDBalanceAfterWithdarw))
       >
       Number(fromWei(userUSDBalanceBeforeWithdarw))
     )
-    // user should NOT receive DAIUNI token
-    assert.equal(fromWei(userDAIBNTBalanceBeforeWithdarw), fromWei(userDAIBNTBalanceAfterWithdarw))
+    // user should NOT receive DAIBNT token directly
+    assert.equal(fromWei(await DAIBNT.balanceOf(userOne)), 0)
   })
 
   it('Correct convert CToken', async function() {
