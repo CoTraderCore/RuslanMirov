@@ -104,6 +104,7 @@ contract ConvertPortal {
   }
 
   // helper for convert Compound asset
+  // _source - should be Compound token 
   function convertCompound(address _source, uint256 _sourceAmount, address _destination)
     private
     returns(uint256)
@@ -159,6 +160,7 @@ contract ConvertPortal {
   }
 
   // helper for convert Unswap asset
+  // _source - should be Uni pool
   function convertUniswapPool(address _source, uint256 _sourceAmount, address _destination)
     private
     returns(uint256)
@@ -212,7 +214,7 @@ contract ConvertPortal {
   }
 
   // helper for convert Syntetix asset
-  // from should be Synthetix asset
+  // _source - should be Synthetix asset
   function convertSynthetix(address _source, uint256 _sourceAmount, address _destination)
     private
     returns(uint256)
@@ -287,6 +289,7 @@ contract ConvertPortal {
   }
 
   // helper for convert Bancor pools asset
+  // _source - should be Bancor pool
   function convertBancorPool(address _source, uint256 _sourceAmount, address _destination)
     private
     returns(uint256)
