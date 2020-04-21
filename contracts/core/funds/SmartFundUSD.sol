@@ -185,7 +185,8 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
   * @param _stableCoinAddress    New stable address
   */
   function changeStableCoinAddress(address _stableCoinAddress) external onlyOwner {
-    require(permittedStabels.permittedAddresses(_stableCoinAddress));
+    require(totalWeiDeposited == 0, "not allow change stable coin, if deposit is already made");
+    require(permittedStabels.permittedAddresses(_stableCoinAddress), "address not permitted");
     stableCoinAddress = _stableCoinAddress;
   }
 }
