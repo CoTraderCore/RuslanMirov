@@ -46,7 +46,8 @@ module.exports = async (deployer, network, accounts) => {
     //
     // await deployer.deploy(GetRatioForBancorAssets, GetBancorAddressFromRegistry.address)
     //
-    // await deployer.deploy(PoolPortal,
+    // await deployer.deploy(
+    //   PoolPortal,
     //   GetBancorAddressFromRegistry.address,
     //   GetRatioForBancorAssets.address,
     //   BANCOR_ETH_WRAPPER,
@@ -58,7 +59,8 @@ module.exports = async (deployer, network, accounts) => {
     //
     // await deployer.deploy(PermittedStabels, STABLE_COIN_ADDRESS)
     //
-    // await deployer.deploy(ExchangePortal,
+    // await deployer.deploy(
+    //   ExchangePortal,
     //   PARASWAP_NETWORK_ADDRESS,
     //   PARASWAP_PRICE_ADDRESS,
     //   ParaswapParams.address,
@@ -82,6 +84,9 @@ module.exports = async (deployer, network, accounts) => {
     //   COMPOUND_CETHER,
     //   SYNTHETIX_USD
     // )
+    //
+    // await TokensTypeStorage.addNewPermittedAddress(PoolPortal.address)
+    // await TokensTypeStorage.addNewPermittedAddress(ExchangePortal.address)
     //
     // await deployer.deploy(PermittedExchanges, ExchangePortal.address)
     //

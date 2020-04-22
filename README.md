@@ -22,3 +22,13 @@ NOTE: in separate console
 1) npm run ganache  
 2) truffle test
 ```
+
+
+# Note
+```
+If You trying trade and get revert with Fail with error 'Sender not have permition for edit this contract'
+
+This means You need add Your new Exchange/Pool portal to Tokens Type storage permitted for write 
+
+TokensTypeStorage.addNewPermittedAddress(YourNewAddress)
+```
