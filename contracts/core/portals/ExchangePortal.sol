@@ -653,7 +653,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   }
 
   // helper for get value between Compound assets and ETH/ERC20
-  // NOTE: _from should be COMPOUND cTokens
+  // NOTE: _from should be COMPOUND cTokens,
+  // amount should be 1e8 because cTokens support 8 decimals
   function getValueViaCompound(
     address _from,
     address _to,
@@ -679,7 +680,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   }
 
   // helper for get underlying amount by cToken amount
-  // NOTE: _from should be Compound token
+  // NOTE: _from should be Compound token, amount = input * 1e8 (not 1e18)
   function getCompoundUnderlyingRatio(
     address _from,
     uint256 _amount
