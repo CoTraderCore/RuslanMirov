@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 import "./SmartFundCore.sol";
 import "../interfaces/SmartFundUSDInterface.sol";
-import "../interfaces/PermittedStabelsInterface.sol";
+import "../interfaces/PermittedStablesInterface.sol";
 
 
 /*
@@ -17,7 +17,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
   address public stableCoinAddress;
 
   // The Smart Contract which stores the addresses of all the authorized stable coins
-  PermittedStabelsInterface public permittedStabels;
+  PermittedStablesInterface public permittedStabels;
 
   /**
   * @dev constructor
@@ -67,7 +67,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
   )
   public {
     // Initial stable coint interface
-    permittedStabels = PermittedStabelsInterface(_permittedStabels);
+    permittedStabels = PermittedStablesInterface(_permittedStabels);
     // Initial stable coin address
     stableCoinAddress = _stableCoinAddress;
     // Push stable coin in tokens list

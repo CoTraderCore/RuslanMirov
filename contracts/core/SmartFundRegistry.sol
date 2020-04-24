@@ -4,7 +4,7 @@ import "./interfaces/SmartFundETHFactoryInterface.sol";
 import "./interfaces/SmartFundUSDFactoryInterface.sol";
 import "./interfaces/PermittedExchangesInterface.sol";
 import "./interfaces/PermittedPoolsInterface.sol";
-import "./interfaces/PermittedStabelsInterface.sol";
+import "./interfaces/PermittedStablesInterface.sol";
 import "../zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 /*
@@ -18,7 +18,7 @@ contract SmartFundRegistry is Ownable {
   // The Smart Contract which stores the addresses of all the authorized Pool Portals
   PermittedPoolsInterface public permittedPools;
   // The Smart Contract which stores the addresses of all the authorized stable coins
-  PermittedStabelsInterface public permittedStabels;
+  PermittedStablesInterface public permittedStabels;
 
   // Addresses of portals
   address public poolPortalAddress;
@@ -76,7 +76,7 @@ contract SmartFundRegistry is Ownable {
     exchangePortalAddress = _exchangePortalAddress;
     permittedExchanges = PermittedExchangesInterface(_permittedExchangesAddress);
     permittedPools = PermittedPoolsInterface(_permittedPoolAddress);
-    permittedStabels = PermittedStabelsInterface(_permittedStabels);
+    permittedStabels = PermittedStablesInterface(_permittedStabels);
     poolPortalAddress = _poolPortalAddress;
     stableCoinAddress = _stableCoinAddress;
     smartFundETHFactory = SmartFundETHFactoryInterface(_smartFundETHFactory);
