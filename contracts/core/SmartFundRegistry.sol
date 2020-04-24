@@ -5,6 +5,7 @@ import "./interfaces/SmartFundUSDFactoryInterface.sol";
 import "./interfaces/PermittedExchangesInterface.sol";
 import "./interfaces/PermittedPoolsInterface.sol";
 import "./interfaces/PermittedStablesInterface.sol";
+import "./interfaces/PermittedConvertsInterface.sol";
 import "../zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 /*
@@ -19,6 +20,8 @@ contract SmartFundRegistry is Ownable {
   PermittedPoolsInterface public permittedPools;
   // The Smart Contract which stores the addresses of all the authorized stable coins
   PermittedStablesInterface public permittedStabels;
+  // The Smart Contract which stores the addresses of all the authorized Converts portal
+  PermittedConvertsInterface public permittedConverts;
 
   // Addresses of portals
   address public poolPortalAddress;
@@ -57,6 +60,7 @@ contract SmartFundRegistry is Ownable {
   * @param _smartFundETHFactory          Address of smartFund ETH factory
   * @param _smartFundUSDFactory          Address of smartFund USD factory
   * @param _cEther                       Address of Compound ETH wrapper
+  * @param _permittedConvertsAddress     Address of the permittedConverts contract
   */
   constructor(
     address _convertPortalAddress,
@@ -69,7 +73,8 @@ contract SmartFundRegistry is Ownable {
     address _stableCoinAddress,
     address _smartFundETHFactory,
     address _smartFundUSDFactory,
-    address _cEther
+    address _cEther,
+    address _permittedConvertsAddress
   ) public {
     convertPortalAddress = _convertPortalAddress;
     platformFee = _platformFee;
@@ -82,6 +87,7 @@ contract SmartFundRegistry is Ownable {
     smartFundETHFactory = SmartFundETHFactoryInterface(_smartFundETHFactory);
     smartFundUSDFactory = SmartFundUSDFactoryInterface(_smartFundUSDFactory);
     cEther = _cEther;
+    permittedConverts = PermittedConvertsInterface(_permittedConvertsAddress);
   }
 
   /**
@@ -116,7 +122,8 @@ contract SmartFundRegistry is Ownable {
         poolPortalAddress,
         stableCoinAddress,
         convertPortalAddress,
-        cEther
+        cEther,
+        address(permittedConverts)
       );
     }else{
       // Create ETH Fund
@@ -130,7 +137,8 @@ contract SmartFundRegistry is Ownable {
         address(permittedPools),
         poolPortalAddress,
         convertPortalAddress,
-        cEther
+        cEther,
+        address(permittedConverts)
       );
     }
 

@@ -20,7 +20,8 @@ contract SmartFundETHFactory {
     address _permittedPools,
     address _poolPortalAddress,
     address _convertPortalAddress,
-    address _cEther
+    address _cEther,
+    address _permittedConvertsAddress
     )
   public
   returns(address)
@@ -36,7 +37,8 @@ contract SmartFundETHFactory {
       _permittedPools,
       _poolPortalAddress,
       _convertPortalAddress,
-      _cEther
+      _cEther,
+      _permittedConvertsAddress
     );
 
     return address(smartFundETH);

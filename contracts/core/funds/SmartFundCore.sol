@@ -19,6 +19,8 @@ import "../interfaces/ConvertPortalInterface.sol";
 
 import "../interfaces/PermittedExchangesInterface.sol";
 import "../interfaces/PermittedPoolsInterface.sol";
+import "../interfaces/PermittedConvertsInterface.sol";
+
 import "../interfaces/SmartFundOverrideInterface.sol";
 
 import "../../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
@@ -50,6 +52,9 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
 
   // The Smart Contract which stores the addresses of all the authorized Pools Portals
   PermittedPoolsInterface public permittedPools;
+
+  // The Smart Contract which stores the addresses of all the authorized Converts Portals
+  PermittedConvertsInterface public permittedConverts;
 
   // KyberExchange recognizes ETH by this address
   ERC20 constant internal ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
@@ -139,7 +144,8 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     address _poolPortalAddress,
     address _convertPortalAddress,
     address _cEther,
-    address _coreFundAsset
+    address _coreFundAsset,
+    address _permittedConvertsAddress
   )public{
     // never allow a 100% fee
     require(_successFee < TOTAL_PERCENTAGE);
@@ -172,6 +178,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     permittedPools = PermittedPoolsInterface(_permittedPoolsAddress);
     poolPortal = PoolPortalInterface(_poolPortalAddress);
     convertPortal = ConvertPortalInterface(_convertPortalAddress);
+    permittedConverts = PermittedConverts(_permittedConvertsAddress);
 
     cEther = _cEther;
     coreFundAsset = _coreFundAsset;
@@ -819,6 +826,18 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     require(permittedExchanges.permittedAddresses(_newExchangePortalAddress));
 
     exchangePortal = ExchangePortalInterface(_newExchangePortalAddress);
+  }
+
+  /**
+  * @dev Allows the fund manager to connect to a new convert portal
+  *
+  * @param _newConvertPortalAddress    The address of the new convert portal to use
+  */
+  function setNewConvertPortal(address _newConvertPortalAddress) public onlyOwner {
+    // Require that the new exchange portal is permitted by permittedConverts
+    require(permittedConverts.permittedAddresses(_newConvertPortalAddress));
+
+    convertPortal = ConvertPortalInterface(_newConvertPortalAddress);
   }
 
   /**
