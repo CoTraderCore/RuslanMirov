@@ -616,12 +616,17 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     ERC20(_cToken).approve(address(exchangePortal), amount);
 
     uint256 receivedAmount = exchangePortal.compoundRedeemByPercent(
-       _percent,
-       _cToken
+      _percent,
+      _cToken
     );
 
-    if(receivedAmount > 0)
-      _addToken(_cToken);
+    if(receivedAmount > 0){
+      address underlying = (_cToken == cEther)
+      ? ETH_TOKEN_ADDRESS
+      : exchangePortal.getCTokenUnderlying(_cToken);
+
+      _addToken(underlying);
+    }
   }
 
   /**
