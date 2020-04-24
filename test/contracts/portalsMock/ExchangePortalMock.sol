@@ -4,11 +4,6 @@ import "../../../contracts/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "../../../contracts/core/interfaces/ITokensTypeStorage.sol";
 
-import "../synthetixMock/ISynth.sol";
-import "../synthetixMock/ISynthetix.sol";
-import "../synthetixMock/IAddressResolver.sol";
-import "../synthetixMock/IExchangeRates.sol";
-
 import "../compoundMock/CEther.sol";
 import "../compoundMock/CToken.sol";
 
@@ -16,10 +11,6 @@ contract ExchangePortalMock {
 
   using SafeMath for uint256;
   ITokensTypeStorage public tokensTypes;
-
-  // Synthetix
-  ISynthetix public synthetix;
-  IAddressResolver public synthetixAddressResolver;
 
   // This contract recognizes ETH by this address, airswap recognizes ETH as address(0x0)
   ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
@@ -34,7 +25,7 @@ contract ExchangePortalMock {
   CEther public cEther;
 
   // Enum
-  enum ExchangeType { Paraswap, Bancor, OneInch, Synthetix}
+  enum ExchangeType { Paraswap, Bancor, OneInch }
 
   event Trade(address trader, address src, uint256 srcAmount, address dest, uint256 destReceived, uint8 exchangeType);
 
@@ -42,8 +33,6 @@ contract ExchangePortalMock {
     uint256 _mul,
     uint256 _div,
     address _stableCoinAddress,
-    address _synthetix,
-    address _synthetixAddressResolver,
     address _cETH,
     address _tokensTypes
     )
@@ -52,8 +41,6 @@ contract ExchangePortalMock {
     mul = _mul;
     div = _div;
     stableCoinAddress = _stableCoinAddress;
-    synthetix = ISynthetix(_synthetix);
-    synthetixAddressResolver = IAddressResolver(_synthetixAddressResolver);
     cEther = CEther(_cETH);
     tokensTypes = ITokensTypeStorage(_tokensTypes);
   }
@@ -87,14 +74,6 @@ contract ExchangePortalMock {
     else if (_type == uint(ExchangeType.OneInch)) {
       // Trade via Bancor(We can add special logic fo Bancor here)
       receivedAmount = _trade(_source, _destination, _sourceAmount);
-    }
-    else if(_type == uint(ExchangeType.Synthetix)){
-      // Trade via Synthetix
-      receivedAmount = _tradeViaSynthetix(
-          _source,
-          _destination,
-          _sourceAmount
-      );
     }
     else {
       // unknown exchange type
@@ -138,27 +117,6 @@ contract ExchangePortalMock {
     setTokenType(_destination, "CRYPTOCURRENCY");
   }
 
-  // Mock for trade via Synthetix
-  // Synthetix has logic burn and mint
-  // And trade can be only for Synth assests
-  function _tradeViaSynthetix(
-    address sourceToken,
-    address destinationToken,
-    uint256 sourceAmount
-    )
-    private
-    returns(uint256 returnAmount)
-  {
-    // transfer from sender, and don't need additional aprove to syntetix main contract
-    // because main syntetix do burn and mint
-    require(ERC20(sourceToken).transferFrom(msg.sender, address(this), sourceAmount));
-    ISynth from = ISynth(sourceToken);
-    ISynth to = ISynth(destinationToken);
-
-    returnAmount = synthetix.exchange(from.currencyKey(), sourceAmount, to.currencyKey());
-
-    setTokenType(destinationToken, "SYNTHETIX");
-  }
 
   // Possibilities:
   // * kyber.getExpectedRate
@@ -300,25 +258,6 @@ contract ExchangePortalMock {
     div = _div;
   }
 
-  // helper for get ratio between assets in Paraswap platform
-  // NOTE this works only for synthetix assets
-  // (For get value in non synthetix assets need first convert to sUSD or sETH and then use Uniswap rate)
-  function getValueViaSynthetix(
-    address _from,
-    address _to,
-    uint256 _amount
-  ) public view returns (uint256 value) {
-    // get latest exchangeRates instance
-    IExchangeRates exchangeRates = IExchangeRates(
-      synthetixAddressResolver.requireAndGetAddress(bytes32("ExchangeRates"),
-      "Missing ExchangeRates address")
-    );
-
-    ISynth from = ISynth(_from);
-    ISynth to = ISynth(_to);
-
-    return exchangeRates.effectiveValue(from.currencyKey(), _amount, to.currencyKey());
-  }
 
   function _transferFromSenderAndApproveTo(ERC20 _source, uint256 _sourceAmount, address _to) private {
     require(_source.transferFrom(msg.sender, this, _sourceAmount));

@@ -9,7 +9,7 @@ Not finished
 1) Added both aggregators 1inch and Parawap
 2) Convert assets to ETH or USD before withdraw
 3) Add min return for trade
-4) Add Synthetix
+4) Add tokens type storage 
 ```
 
 
@@ -28,7 +28,7 @@ NOTE: in separate console
 ```
 If You trying trade and get revert with Fail with error 'Sender not have permition for edit this contract'
 
-This means You need add Your new Exchange/Pool portal to Tokens Type storage permitted for write 
+This means You need add Your new Exchange/Pool portal to Tokens Type storage permitted for write
 
 TokensTypeStorage.addNewPermittedAddress(YourNewAddress)
 ```

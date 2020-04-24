@@ -26,10 +26,6 @@ const PoolPortalMock = artifacts.require('./portalsMock/PoolPortalMock')
 const CoTraderDAOWalletMock = artifacts.require('./CoTraderDAOWalletMock')
 const CToken = artifacts.require('./compoundMock/CToken')
 const CEther = artifacts.require('./compoundMock/CEther')
-const Synthetix = artifacts.require('./synthetixMock/Synthetix')
-const Synth = artifacts.require('./synthetixMock/Synth')
-const ExchangeRates = artifacts.require('./synthetixMock/ExchangeRates')
-const AddressResolver = artifacts.require('./synthetixMock/AddressResolver')
 
 
 // Tokens keys converted in bytes32
@@ -37,7 +33,6 @@ const TOKEN_KEY_CRYPTOCURRENCY = "0x43525950544f43555252454e43590000000000000000
 const TOKEN_KEY_COMPOUND = "0x434f4d504f554e44000000000000000000000000000000000000000000000000"
 const TOKEN_KEY_BANCOR_POOL = "0x42414e434f5220504f4f4c000000000000000000000000000000000000000000"
 const TOKEN_KEY_UNISWAP_POOL = "0x554e495357415020504f4f4c0000000000000000000000000000000000000000"
-const TOKEN_KEY_SYNTHETIX = "0x53594e5448455449580000000000000000000000000000000000000000000000"
 
 // Contracts instance
 let xxxERC,
@@ -52,11 +47,6 @@ let xxxERC,
     poolPortal,
     COT_DAO_WALLET,
     yyyERC,
-    sETH,
-    sUSD,
-    synthetix,
-    synthetixRates,
-    synthetixAddressResolver,
     tokensType,
     convertPortal
 
@@ -126,44 +116,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       toWei(String(100000000))
     )
 
-    // Deploy Synthetix address resolver
-    synthetixAddressResolver = await AddressResolver.new()
-
-    // Deploy Synthetix Rates
-    synthetixRates = await ExchangeRates.new()
-
-    // Deploy main Synthetix contract
-    synthetix = await Synthetix.new(
-      'SYNTHETIX',
-      'SNT',
-      18,
-      toWei(String(100000000)),
-      synthetixAddressResolver.address,
-      synthetixRates.address
-    )
-
-    // DEPLOY SYNTHETIX TOKENS
-    sETH = await Synth.new(
-      'SYNTHETIX ETH',
-      'sETH',
-      18,
-      toWei(String(100)),
-      synthetix.address
-    )
-
-    sUSD = await Synth.new(
-      'SYNTHETIX USD',
-      'sUSD',
-      18,
-      toWei(String(100)),
-      synthetix.address
-    )
-
-    // Add Synthetix Contracts in addressResolver
-    await synthetixAddressResolver.addAddress('sETH', sETH.address)
-    await synthetixAddressResolver.addAddress('sUSD', sUSD.address)
-    await synthetixAddressResolver.addAddress('ExchangeRates', synthetixRates.address)
-
     // Deploy tokens type storage
     tokensType = await TokensTypeStorage.new()
 
@@ -176,8 +128,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       1,
       1,
       DAI.address,
-      synthetix.address,
-      synthetixAddressResolver.address,
       cEther.address,
       tokensType.address
     )
@@ -195,8 +145,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       exchangePortal.address,
       poolPortal.address,
       tokensType.address,
-      cEther.address,
-      sUSD.address
+      cEther.address
     )
 
     // allow exchange portal and pool portal write to token type storage
@@ -262,26 +211,9 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       const totalSupplyCE = await cEther.totalSupply()
       assert.equal(nameCE, "Compound Ether")
       assert.equal(totalSupplyCE, toWei(String(100000000)))
-
-
-      const sETHSymbol = await sETH.symbol()
-      const sETHTotalSupply = await sETH.totalSupply()
-      assert.equal(sETHSymbol, "sETH")
-      assert.equal(sETHTotalSupply, toWei(String(100)))
-      assert.equal(await sETH.owner(), synthetix.address)
-
-
-      const sUSDSymbol = await sUSD.symbol()
-      const sUSDTotalSupply = await sUSD.totalSupply()
-      assert.equal(sUSDSymbol, "sUSD")
-      assert.equal(sUSDTotalSupply, toWei(String(100)))
-      assert.equal(await sUSD.owner(), synthetix.address)
     })
 
     it('Correct init exchange portal', async function() {
-      assert.equal(await exchangePortal.synthetix(), synthetix.address)
-      assert.equal(await exchangePortal.synthetixAddressResolver(),
-      synthetixAddressResolver.address)
       assert.equal(await exchangePortal.stableCoinAddress(), DAI.address)
     })
 
@@ -1496,58 +1428,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     })
   })
 
-  describe('SYNTHETIX', function() {
-    it('Should be able trade via syntetix', async function() {
-      // deploy smartFund with 10% success fee
-      await deployContracts(1000, 0)
-      // give exchange portal contract 1 syntetix USD
-      await sUSD.transfer(exchangePortal.address, toWei(String(1)))
-      // deposit in fund
-      await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
-
-      // change ETH to sUSD via type 0 (Paraswap)
-      // sUSD can be trade as CRYPTOCURRENCY
-      await smartFundETH.trade(
-        ETH_TOKEN_ADDRESS,
-        toWei(String(1)),
-        sUSD.address,
-        0,
-        [],
-        "0x",
-        toWei(String(1)),
-        {
-          from: userOne,
-        }
-      )
-
-      // check smart fund received sUSD and send ETH
-      assert.equal(await sUSD.balanceOf(smartFundETH.address), toWei(String(1)))
-      assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
-
-      // change sUSD to some SYNTHETIX asset (sETH for this case) via Synthetix (type 3)
-      await smartFundETH.trade(
-        sUSD.address,
-        toWei(String(1)),
-        sETH.address,
-        3,
-        [],
-        "0x",
-        toWei(String(1)),
-        {
-          from: userOne,
-        }
-      )
-
-      // Check Key after trade via Syntetix, recieved assets should be marked as SYNTHETIX
-      assert.equal(await tokensType.getType(sETH.address), TOKEN_KEY_SYNTHETIX)
-
-      // check smart fund received sETH and send sUSD
-      assert.equal(await sUSD.balanceOf(smartFundETH.address), 0)
-      assert.equal(await sETH.balanceOf(smartFundETH.address), toWei(String(1)))
-    })
-  })
-
-
   describe('Convert withdarwed assets to core fund asset', function() {
     it('correct convert CRYPTOCURRENCY', async function() {
       // deploy smartFund with 10% success fee
@@ -1594,75 +1474,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // user should NOT receive xxx token
       assert.equal(fromWei(userXXXBalanceBeforeWithdarw), fromWei(userXXXBalanceAfterWithdarw))
     })
-
-    it('correct convert SYNTHETIX', async function() {
-      // deploy smartFund with 10% success fee
-      await deployContracts(1000, 0)
-      // give exchange portal contract 1 syntetix USD
-      await sUSD.transfer(exchangePortal.address, toWei(String(1)))
-      // deposit in fund
-      await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
-
-      // change ETH to sUSD via type 0 (Paraswap)
-      // sUSD can be trade as CRYPTOCURRENCY
-      await smartFundETH.trade(
-        ETH_TOKEN_ADDRESS,
-        toWei(String(1)),
-        sUSD.address,
-        0,
-        [],
-        "0x",
-        toWei(String(1)),
-        {
-          from: userOne,
-        }
-      )
-
-      // check smart fund received sUSD and send ETH
-      assert.equal(await sUSD.balanceOf(smartFundETH.address), toWei(String(1)))
-      assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
-
-      // change sUSD to some SYNTHETIX asset (sETH for this case) via Synthetix (type 3)
-      await smartFundETH.trade(
-        sUSD.address,
-        toWei(String(1)),
-        sETH.address,
-        3,
-        [],
-        "0x",
-        toWei(String(1)),
-        {
-          from: userOne,
-        }
-      )
-
-      // Check Key after trade via Syntetix, recieved assets should be marked as SYNTHETIX
-      assert.equal(await tokensType.getType(sETH.address), TOKEN_KEY_SYNTHETIX)
-
-      // check smart fund received sETH and send sUSD
-      assert.equal(await sUSD.balanceOf(smartFundETH.address), 0)
-      assert.equal(await sETH.balanceOf(smartFundETH.address), toWei(String(1)))
-
-      const userSynthETHBalanceBeforeWithdarw = await sETH.balanceOf(userOne)
-      const userETHBalanceBeforeWithdarw = await web3.eth.getBalance(userOne)
-
-      await smartFundETH.withdraw(0, true)
-
-      // fund sent asset
-      assert.equal(await sETH.balanceOf(smartFundETH.address), 0)
-
-      const userETHBalanceAfterWithdarw = await web3.eth.getBalance(userOne)
-      const userSynthETHBalanceAfterWithdarw = await sETH.balanceOf(userOne)
-
-      // user should receive his ETH back
-      assert.isTrue(
-        Number(fromWei(userETHBalanceAfterWithdarw))
-        >
-        Number(fromWei(userETHBalanceBeforeWithdarw))
-      )
-      // user should NOT receive sETH token
-      assert.equal(fromWei(userSynthETHBalanceBeforeWithdarw), fromWei(userSynthETHBalanceAfterWithdarw))
-   })
 
     it('correct convert UNI pool', async function() {
       // send some ETH to exchange portal

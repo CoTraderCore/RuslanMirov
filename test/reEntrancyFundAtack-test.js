@@ -121,8 +121,6 @@ contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
       1,
       1,
       DAI.address,
-      '0x0000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000',
       cEther.address,
       tokensType.address
     )

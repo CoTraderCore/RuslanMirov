@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 /**
 * This contract convert source ERC20 token to destanation token
-* support sources 1INCH, COMPOUND, SYNTHETIX, BANCOR/UNISWAP pools
+* support sources 1INCH, COMPOUND, BANCOR/UNISWAP pools
 */
 
 import "../interfaces/ExchangePortalInterface.sol";
@@ -26,14 +26,12 @@ contract ConvertPortal {
   * @param _poolPortal             address of pool portal
   * @param _tokensTypes            address of the tokens type storage
   * @param _CEther                 address of Compound ETH wrapper
-  * @param _sUSD                   address of Synthetix USD wrapper
   */
   constructor(
     address _exchangePortal,
     address _poolPortal,
     address _tokensTypes,
-    address _CEther,
-    address _sUSD
+    address _CEther
     )
     public
   {
@@ -41,10 +39,9 @@ contract ConvertPortal {
     poolPortal = PoolPortalInterface(_poolPortal);
     tokensTypes = ITokensTypeStorage(_tokensTypes);
     CEther = _CEther;
-    sUSD = _sUSD;
   }
 
-  // convert CRYPTOCURRENCY, COMPOUND, SYNTHETIX, BANCOR/UNISWAP pools to _destination asset
+  // convert CRYPTOCURRENCY, COMPOUND, BANCOR/UNISWAP pools to _destination asset
   function convert(
     address _source,
     uint256 _sourceAmount,
@@ -71,9 +68,6 @@ contract ConvertPortal {
     }
     else if (tokensTypes.getType(_source) == bytes32("COMPOUND")){
       receivedAmount = convertCompound(_source, _sourceAmount, _destination);
-    }
-    else if(tokensTypes.getType(_source) == bytes32("SYNTHETIX")){
-      receivedAmount = convertSynthetix(_source, _sourceAmount, _destination);
     }
     else {
       // Unknown type
@@ -104,7 +98,7 @@ contract ConvertPortal {
   }
 
   // helper for convert Compound asset
-  // _source - should be Compound token 
+  // _source - should be Compound token
   function convertCompound(address _source, uint256 _sourceAmount, address _destination)
     private
     returns(uint256)
@@ -211,51 +205,6 @@ contract ConvertPortal {
     }else{
       return ERC20(_destination).balanceOf(address(this));
     }
-  }
-
-  // helper for convert Syntetix asset
-  // _source - should be Synthetix asset
-  function convertSynthetix(address _source, uint256 _sourceAmount, address _destination)
-    private
-    returns(uint256)
-  {
-    uint256 destAmount = 0;
-    _transferFromSenderAndApproveTo(ERC20(_source), _sourceAmount, address(exchangePortal));
-    if(_source == sUSD){
-      // if this is sUSD, convert via 1inch
-      destAmount = exchangePortal.trade(
-        ERC20(_source),
-        _sourceAmount,
-        ERC20(_destination),
-        2,
-        BYTES32_EMPTY_ARRAY,
-        "0x"
-      );
-    }
-    else{
-      // else convert source to cUSD via Syntetix
-      uint256 sUSDAmount = exchangePortal.trade(
-        ERC20(_source),
-        _sourceAmount,
-        ERC20(sUSD),
-        3, // type Synthetix
-        BYTES32_EMPTY_ARRAY,
-        "0x"
-      );
-
-      // then convert sUSD to destination via 1inch
-      ERC20(sUSD).approve(address(exchangePortal), sUSDAmount);
-      destAmount = exchangePortal.trade(
-        ERC20(sUSD),
-        _sourceAmount,
-        ERC20(_destination),
-        2, // type 1inch
-        BYTES32_EMPTY_ARRAY,
-        "0x"
-      );
-    }
-
-    return destAmount;
   }
 
   // helper for convert standrad crypto assets

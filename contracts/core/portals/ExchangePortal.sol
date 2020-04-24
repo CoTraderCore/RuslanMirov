@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
 /*
-* This contract do swap for ERC20 via Paraswap, 1inch, and Synthetix (between synth assest),
+* This contract do swap for ERC20 via Paraswap, 1inch, and (between synth assest),
   Also Borrow and Reedem via Compound
 
   Also this contract allow get ratio between crypto curency assets
@@ -21,11 +21,6 @@ import "../../bancor/interfaces/BancorNetworkInterface.sol";
 import "../../bancor/interfaces/PathFinderInterface.sol";
 
 import "../../oneInch/IOneSplitAudit.sol";
-
-import "../../synthetix/ISynthetix.sol";
-import "../../synthetix/ISynth.sol";
-import "../../synthetix/IExchangeRates.sol";
-import "../../synthetix/IAddressResolver.sol";
 
 import "../../compound/CEther.sol";
 import "../../compound/CToken.sol";
@@ -47,11 +42,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   // COMPOUND
   CEther public cEther;
 
-  // SYTHETEX
-  ISynthetix public synthetix;
-  IAddressResolver public synthetixAddressResolver;
-  address public SYNTHETIX_USD;
-
   // PARASWAP
   address public paraswap;
   ParaswapInterface public paraswapInterface;
@@ -72,7 +62,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
 
   // Enum
   // NOTE: You can add a new type at the end, but do not change this order
-  enum ExchangeType { Paraswap, Bancor, OneInch, Synthetix }
+  enum ExchangeType { Paraswap, Bancor, OneInch }
 
   // This contract recognizes ETH by this address
   ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
@@ -107,9 +97,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _permitedStable         address of permitedStable contract
   * @param _poolPortal             address of pool portal
   * @param _oneInch                address of 1inch OneSplitAudit contract
-  * @param _synthetix              address of Synthetix contract
-  * @param _addressResolver        address of Synthetix address resolver contract
-  * @param _synthetixUSD           address of Synthetix sUSD
   * @param _cEther                 address of the COMPOUND cEther
   * @param _tokensTypes            address of the ITokensTypeStorage
   */
@@ -122,9 +109,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _permitedStable,
     address _poolPortal,
     address _oneInch,
-    address _synthetix,
-    address _addressResolver,
-    address _synthetixUSD,
     address _cEther,
     address _tokensTypes
     )
@@ -140,9 +124,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     permitedStable = PermittedStabelsInterface(_permitedStable);
     poolPortal = PoolPortalInterface(_poolPortal);
     oneInch = IOneSplitAudit(_oneInch);
-    synthetix = ISynthetix(_synthetix);
-    synthetixAddressResolver = IAddressResolver(_addressResolver);
-    SYNTHETIX_USD = _synthetixUSD;
     cEther = CEther(_cEther);
     tokensTypes = ITokensTypeStorage(_tokensTypes);
   }
@@ -208,15 +189,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     // SHOULD TRADE 1INCH HERE
     else if (_type == uint(ExchangeType.OneInch)){
       receivedAmount = _tradeViaOneInch(
-          _source,
-          _destination,
-          _sourceAmount
-      );
-    }
-
-    // SHOULD TRADE Synthetix HERE
-    else if(_type == uint(ExchangeType.Synthetix)){
-      receivedAmount = _tradeViaSynthetix(
           _source,
           _destination,
           _sourceAmount
@@ -387,26 +359,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
  }
 
- // Facilitates trade with Synthetix
- // Note this works only for Synth assets
- function _tradeViaSynthetix(
-   address sourceToken,
-   address destinationToken,
-   uint256 sourceAmount
-   )
-   private
-   returns(uint256 returnAmount)
- {
-   // transfer from sender, and don't need additional aprove to syntetix main contract
-   // because main syntetix do burn and mint
-   require(ERC20(sourceToken).transferFrom(msg.sender, address(this), sourceAmount));
-   ISynth from = ISynth(sourceToken);
-   ISynth to = ISynth(destinationToken);
-
-   returnAmount = synthetix.exchange(from.currencyKey(), sourceAmount, to.currencyKey());
-   setTokenType(destinationToken, "SYNTHETIX");
- }
-
 
   /**
   * @dev Transfers tokens to this contract and approves them to another address
@@ -534,9 +486,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       else if (tokensTypes.getType(_from) == bytes32("COMPOUND")){
         return getValueViaCompound(_from, _to, _amount);
       }
-      else if(tokensTypes.getType(_from) == bytes32("SYNTHETIX")){
-        return getValueViaSynthetix(_from, _to, _amount);
-      }
       else{
         // Unmarked type, try find value
         return findValue(_from, _to, _amount);
@@ -572,11 +521,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
        uint256 bancorResult = getValueViaBancor(_from, _to, _amount);
        if(bancorResult > 0)
           return bancorResult;
-
-       // If Syntetix return 0, check from Compound for ensure this is not Compound asset
-       uint256 synthetixResult = getValueViaSynthetix(_from, _to, _amount);
-       if(synthetixResult > 0)
-          return synthetixResult;
 
        // If Compound return 0, check from Uniswap pools for ensure this is not Uniswap
        uint256 compoundResult = getValueViaCompound(_from, _to, _amount);
@@ -697,53 +641,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       uint256 rate = CToken(_from).exchangeRateCurrent();
       uint256 underlyingAmount = _amount.mul(rate).div(1e18);
       return underlyingAmount;
-    }else{
-      return 0;
-    }
-  }
-
-  // helper for get value from Syntetix asset to any asset in DEXs which support sUSD
-  // NOTE _from should be syntetix asset
-  function getValueViaSynthetix(
-    address _from,
-    address _to,
-    uint256 _amount
-  ) public view returns (uint256 value) {
-    // convert _from asset to Synthetix USD
-    uint256 sUSDAmount = (_from == SYNTHETIX_USD)
-    ? _amount // no need convert if this sUSD
-    : getValueBetweenOnlySynthetixAssets(_from, SYNTHETIX_USD, _amount);
-
-    // get value in Uniswap for Synthetix USD output
-    return getValueViaParaswap(SYNTHETIX_USD, _to, sUSDAmount);
-  }
-
-  // helper for get ratio between assets in Synthetix network
-  // NOTE this works only for synthetix assets
-  function getValueBetweenOnlySynthetixAssets(
-    address _from,
-    address _to,
-    uint256 _amount
-  ) public view returns (uint256 value) {
-    // get latest exchangeRates instance
-    IExchangeRates exchangeRates = IExchangeRates(
-      synthetixAddressResolver.requireAndGetAddress(bytes32("ExchangeRates"),
-      "Missing ExchangeRates address")
-    );
-
-    ISynth from = ISynth(_from);
-    ISynth to = ISynth(_to);
-
-    // check if can be called without error for input pairs
-    (bool success) = address(exchangeRates).call(
-    abi.encodeWithSelector(exchangeRates.effectiveValue.selector,
-      from.currencyKey(),
-      _amount,
-      to.currencyKey())
-    );
-
-    if(success){
-      return exchangeRates.effectiveValue(from.currencyKey(), _amount, to.currencyKey());
     }else{
       return 0;
     }
