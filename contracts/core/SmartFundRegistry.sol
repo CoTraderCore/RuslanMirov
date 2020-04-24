@@ -123,7 +123,7 @@ contract SmartFundRegistry is Ownable {
         stableCoinAddress,
         convertPortalAddress,
         cEther,
-        address(permittedConverts)
+        convertPortalAddress
       );
     }else{
       // Create ETH Fund
@@ -138,7 +138,7 @@ contract SmartFundRegistry is Ownable {
         poolPortalAddress,
         convertPortalAddress,
         cEther,
-        address(permittedConverts)
+        convertPortalAddress
       );
     }
 
@@ -168,6 +168,7 @@ contract SmartFundRegistry is Ownable {
   function setExchangePortalAddress(address _newExchangePortalAddress) public onlyOwner {
     // Require that the new exchange portal is permitted by permittedExchanges
     require(permittedExchanges.permittedAddresses(_newExchangePortalAddress));
+    
     exchangePortalAddress = _newExchangePortalAddress;
   }
 
@@ -181,6 +182,19 @@ contract SmartFundRegistry is Ownable {
     require(permittedPools.permittedAddresses(_poolPortalAddress));
 
     poolPortalAddress = _poolPortalAddress;
+  }
+
+
+  /**
+  * @dev Sets a new default Convert Portal address
+  *
+  * @param _convertPortalAddress    Address of the new convert portal to be set
+  */
+  function setConvertPortalAddress (address _convertPortalAddress) external onlyOwner {
+    // Require that the new pool portal is permitted by permittedPools
+    require(permittedConverts.permittedAddresses(_convertPortalAddress));
+
+    convertPortalAddress = _convertPortalAddress;
   }
 
   /**
