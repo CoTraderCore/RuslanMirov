@@ -29,9 +29,6 @@ const STABLE_COIN_ADDRESS = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
 const UNISWAP_FACTORY = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
 const COMPOUND_CETHER = "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5"
 const ONE_INCH = "0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E"
-const SYNTHETIX = "0x2987252148e34863612Ac7f4Ef3260de0C2A68f7"
-const SYNTHETIX_ADDRESS_RESOLVER = "0xFbB6526ed92DA8915d4843a86166020d0B7bAAd0"
-const SYNTHETIX_USD = "0xAe38b81459d74A8C16eAa968c792207603D84480"
 
 
 // deploy
@@ -69,9 +66,6 @@ module.exports = async (deployer, network, accounts) => {
     //   PermittedStabels.address,
     //   PoolPortal.address,
     //   ONE_INCH,
-    //   SYNTHETIX,
-    //   SYNTHETIX_ADDRESS_RESOLVER,
-    //   SYNTHETIX_USD,
     //   COMPOUND_CETHER,
     //   TokensTypeStorage.address
     // )
@@ -81,8 +75,7 @@ module.exports = async (deployer, network, accounts) => {
     //   ExchangePortal.address,
     //   PoolPortal.address,
     //   TokensTypeStorage.address,
-    //   COMPOUND_CETHER,
-    //   SYNTHETIX_USD
+    //   COMPOUND_CETHER
     // )
     //
     // await TokensTypeStorage.addNewPermittedAddress(PoolPortal.address)
