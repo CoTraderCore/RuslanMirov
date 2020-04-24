@@ -168,7 +168,7 @@ contract SmartFundRegistry is Ownable {
   function setExchangePortalAddress(address _newExchangePortalAddress) public onlyOwner {
     // Require that the new exchange portal is permitted by permittedExchanges
     require(permittedExchanges.permittedAddresses(_newExchangePortalAddress));
-    
+
     exchangePortalAddress = _newExchangePortalAddress;
   }
 
@@ -191,7 +191,7 @@ contract SmartFundRegistry is Ownable {
   * @param _convertPortalAddress    Address of the new convert portal to be set
   */
   function setConvertPortalAddress (address _convertPortalAddress) external onlyOwner {
-    // Require that the new pool portal is permitted by permittedPools
+    // Require that the new convert portal is permitted by permittedConverts
     require(permittedConverts.permittedAddresses(_convertPortalAddress));
 
     convertPortalAddress = _convertPortalAddress;
