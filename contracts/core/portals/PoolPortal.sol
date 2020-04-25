@@ -121,6 +121,9 @@ contract PoolPortal {
     _transferFromSenderAndApproveTo(ercConnector, connectorAmount, converterAddress);
     // buy relay from converter
     converter.fund(_amount);
+
+    require(_amount > 0, "BNT pool recieved amount can not be zerro");
+
     // transfer relay back to smart fund
     _poolToken.transfer(msg.sender, _amount);
 
@@ -165,6 +168,9 @@ contract PoolPortal {
         deadline);
       // reset approve (some ERC20 not allow do new approve if already approved)
       ERC20(tokenAddress).approve(_poolToken, 0);
+
+      require(poolAmount > 0, "UNI pool recieved amount can not be zerro");
+
       // transfer pool token back to smart fund
       ERC20(_poolToken).transfer(msg.sender, poolAmount);
       // transfer ERC20 remains

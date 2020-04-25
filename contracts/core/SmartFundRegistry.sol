@@ -19,7 +19,7 @@ contract SmartFundRegistry is Ownable {
   // The Smart Contract which stores the addresses of all the authorized Pool Portals
   PermittedPoolsInterface public permittedPools;
   // The Smart Contract which stores the addresses of all the authorized stable coins
-  PermittedStablesInterface public permittedStabels;
+  PermittedStablesInterface public permittedStables;
   // The Smart Contract which stores the addresses of all the authorized Converts portal
   PermittedConvertsInterface public permittedConverts;
 
@@ -55,7 +55,7 @@ contract SmartFundRegistry is Ownable {
   * @param _exchangePortalAddress        Address of the initial ExchangePortal contract
   * @param _permittedPoolAddress         Address of the permittedPool contract
   * @param _poolPortalAddress            Address of the initial PoolPortal contract
-  * @param _permittedStabels             Address of the permittesStabels contract
+  * @param _permittedStables             Address of the permittesStabels contract
   * @param _stableCoinAddress            Address of the stable coin
   * @param _smartFundETHFactory          Address of smartFund ETH factory
   * @param _smartFundUSDFactory          Address of smartFund USD factory
@@ -69,7 +69,7 @@ contract SmartFundRegistry is Ownable {
     address _exchangePortalAddress,
     address _permittedPoolAddress,
     address _poolPortalAddress,
-    address _permittedStabels,
+    address _permittedStables,
     address _stableCoinAddress,
     address _smartFundETHFactory,
     address _smartFundUSDFactory,
@@ -81,7 +81,7 @@ contract SmartFundRegistry is Ownable {
     exchangePortalAddress = _exchangePortalAddress;
     permittedExchanges = PermittedExchangesInterface(_permittedExchangesAddress);
     permittedPools = PermittedPoolsInterface(_permittedPoolAddress);
-    permittedStabels = PermittedStablesInterface(_permittedStabels);
+    permittedStables = PermittedStablesInterface(_permittedStables);
     poolPortalAddress = _poolPortalAddress;
     stableCoinAddress = _stableCoinAddress;
     smartFundETHFactory = SmartFundETHFactoryInterface(_smartFundETHFactory);
@@ -118,7 +118,7 @@ contract SmartFundRegistry is Ownable {
         exchangePortalAddress,
         address(permittedExchanges),
         address(permittedPools),
-        address(permittedStabels),
+        address(permittedStables),
         poolPortalAddress,
         stableCoinAddress,
         convertPortalAddress,
@@ -222,7 +222,7 @@ contract SmartFundRegistry is Ownable {
   * @param _stableCoinAddress    New stable address
   */
   function changeStableCoinAddress(address _stableCoinAddress) external onlyOwner {
-    require(permittedStabels.permittedAddresses(_stableCoinAddress));
+    require(permittedStables.permittedAddresses(_stableCoinAddress));
     stableCoinAddress = _stableCoinAddress;
   }
 

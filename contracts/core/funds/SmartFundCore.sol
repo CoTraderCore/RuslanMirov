@@ -178,7 +178,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     permittedPools = PermittedPoolsInterface(_permittedPoolsAddress);
     poolPortal = PoolPortalInterface(_poolPortalAddress);
     convertPortal = ConvertPortalInterface(_convertPortalAddress);
-    permittedConverts = PermittedConverts(_permittedConvertsAddress);
+    permittedConverts = PermittedConvertsInterface(_permittedConvertsAddress);
 
     cEther = _cEther;
     coreFundAsset = _coreFundAsset;

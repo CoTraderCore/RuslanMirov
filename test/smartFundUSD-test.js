@@ -170,7 +170,8 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       poolPortal.address,                           // address _poolPortalAddress,
       DAI.address,                                  // address_stableCoinAddress
       convertPortal.address,                        // address of convert portal
-      cEther.address                                // address _cEther
+      cEther.address,                               // address _cEther
+      '0x0000000000000000000000000000000000000000'  // address _perrmittedConverts
     )
 
     // send all BNT and UNI pools to portal

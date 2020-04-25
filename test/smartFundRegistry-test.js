@@ -37,6 +37,7 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
       this.smartFundETHFactory.address,             //   SmartFundETHFactory.address,
       this.smartFundUSDFactory.address,             //   SmartFundUSDFactory.address,
       '0x0000000000000000000000000000000000000000', //   COMPOUND_CETHER
+      '0x0000000000000000000000000000000000000000'  //   Permitted cpnverts address 
     )
   })
 

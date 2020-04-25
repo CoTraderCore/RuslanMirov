@@ -1,6 +1,6 @@
 import "./PermittedExchangesInterface.sol";
 import "./PermittedPoolsInterface.sol";
-import "./PermittedStabelsInterface.sol";
+import "./PermittedStablesInterface.sol";
 
 contract ISmartFundRegistry {
   // Compound addresses
@@ -20,5 +20,5 @@ contract ISmartFundRegistry {
   // The Smart Contract which stores the addresses of all the authorized Pool Portals
   PermittedPoolsInterface public permittedPools;
   // The Smart Contract which stores the addresses of all the authorized stable coins
-  PermittedStabelsInterface public permittedStabels;
+  PermittedStablesInterface public permittedStables;
 }

@@ -17,7 +17,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
   address public stableCoinAddress;
 
   // The Smart Contract which stores the addresses of all the authorized stable coins
-  PermittedStablesInterface public permittedStabels;
+  PermittedStablesInterface public permittedStables;
 
   /**
   * @dev constructor
@@ -30,11 +30,12 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
   * @param _exchangePortalAddress        Address of initial exchange portal
   * @param _permittedExchangesAddress    Address of PermittedExchanges contract
   * @param _permittedPoolsAddress        Address of PermittedPools contract
-  * @param _permittedStabels             Address of PermittedStabels contract
+  * @param _permittedStables             Address of permittedStables contract
   * @param _poolPortalAddress            Address of initial pool portal
   * @param _stableCoinAddress            address of stable coin
   * @param _convertPortalAddress         Address of the convert portal
   * @param _cEther                       Address of the cEther
+  * @param _permittedConvertsAddress     Address of the permitted Converts portal 
   */
   constructor(
     address _owner,
@@ -45,11 +46,12 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
     address _exchangePortalAddress,
     address _permittedExchangesAddress,
     address _permittedPoolsAddress,
-    address _permittedStabels,
+    address _permittedStables,
     address _poolPortalAddress,
     address _stableCoinAddress,
     address _convertPortalAddress,
-    address _cEther
+    address _cEther,
+    address _permittedConvertsAddress
   )
   SmartFundCore(
     _owner,
@@ -63,11 +65,12 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
     _poolPortalAddress,
     _convertPortalAddress,
     _cEther,
-    _stableCoinAddress
+    _stableCoinAddress,
+    _permittedConvertsAddress
   )
   public {
     // Initial stable coint interface
-    permittedStabels = PermittedStablesInterface(_permittedStabels);
+    permittedStables = PermittedStablesInterface(_permittedStables);
     // Initial stable coin address
     stableCoinAddress = _stableCoinAddress;
     // Push stable coin in tokens list
@@ -186,7 +189,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
   */
   function changeStableCoinAddress(address _stableCoinAddress) external onlyOwner {
     require(totalWeiDeposited == 0, "not allow change stable coin, if deposit is already made");
-    require(permittedStabels.permittedAddresses(_stableCoinAddress), "address not permitted");
+    require(permittedStables.permittedAddresses(_stableCoinAddress), "address not permitted");
     stableCoinAddress = _stableCoinAddress;
   }
 }

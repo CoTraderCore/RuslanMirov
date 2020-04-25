@@ -25,6 +25,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
   * @param _poolPortalAddress            Address of initial pool portal
   * @param _convertPortalAddress         Address of the convert portal
   * @param _cEther                       Address of the cEther
+  * @param _permittedConvertsAddress     Address of the permitted Converts portal 
   */
   constructor(
     address _owner,
@@ -37,7 +38,8 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
     address _permittedPoolsAddress,
     address _poolPortalAddress,
     address _convertPortalAddress,
-    address _cEther
+    address _cEther,
+    address _permittedConvertsAddress
   )
   SmartFundCore(
     _owner,
@@ -51,7 +53,8 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
     _poolPortalAddress,
     _convertPortalAddress,
     _cEther,
-    address(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee)
+    address(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee),
+    _permittedConvertsAddress
   )
   public{}
 

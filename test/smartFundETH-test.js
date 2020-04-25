@@ -164,7 +164,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       '0x0000000000000000000000000000000000000000', // address _permittedPoolsAddress,
       poolPortal.address,                           // address _poolPortalAddress,
       convertPortal.address,                        // address of convert portal
-      cEther.address                                // address _cEther
+      cEther.address,                               // address _cEther
+      '0x0000000000000000000000000000000000000000'  // address _perrmittedConverts
 
     )
 

@@ -8,7 +8,7 @@ const PoolPortal = artifacts.require('./core/portals/PoolPortal.sol')
 const ConvertPortal = artifacts.require('./core/portals/ConvertPortal.sol')
 
 const PermittedExchanges = artifacts.require('./core/verification/PermittedExchanges.sol')
-const PermittedStabels = artifacts.require('./core/verification/PermittedStabels.sol')
+const PermittedStabels = artifacts.require('./core/verification/PermittedStables.sol')
 const PermittedPools = artifacts.require('./core/verification/PermittedPools.sol')
 
 const TokensTypeStorage = artifacts.require('./core/storage/TokensTypeStorage.sol')

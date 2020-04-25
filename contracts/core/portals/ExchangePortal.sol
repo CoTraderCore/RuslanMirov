@@ -26,7 +26,7 @@ import "../../compound/CEther.sol";
 import "../../compound/CToken.sol";
 
 import "../interfaces/ExchangePortalInterface.sol";
-import "../interfaces/PermittedStabelsInterface.sol";
+import "../interfaces/PermittedStablesInterface.sol";
 import "../interfaces/PoolPortalInterface.sol";
 import "../interfaces/ITokensTypeStorage.sol";
 
@@ -58,7 +58,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
 
   // CoTrader additional
   PoolPortalInterface public poolPortal;
-  PermittedStabelsInterface public permitedStable;
+  PermittedStablesInterface public permitedStable;
 
   // Enum
   // NOTE: You can add a new type at the end, but do not change this order
@@ -121,7 +121,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     paraswapSpender = paraswapInterface.getTokenTransferProxy();
     bancorRegistry = IGetBancorAddressFromRegistry(_bancorRegistryWrapper);
     BancorEtherToken = _BancorEtherToken;
-    permitedStable = PermittedStabelsInterface(_permitedStable);
+    permitedStable = PermittedStablesInterface(_permitedStable);
     poolPortal = PoolPortalInterface(_poolPortal);
     oneInch = IOneSplitAudit(_oneInch);
     cEther = CEther(_cEther);
@@ -200,7 +200,9 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       revert();
     }
 
-    // Check if Ether was received
+    require(receivedAmount > 0, "received amount can not be zerro");
+
+    // Send assets
     if (_destination == ETH_TOKEN_ADDRESS) {
       (msg.sender).transfer(receivedAmount);
     } else {
@@ -403,6 +405,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       cToken.transfer(msg.sender, receivedAmount);
     }
 
+    require(receivedAmount > 0, "received amount can not be zerro");
+
     setTokenType(_cToken, "COMPOUND");
     return receivedAmount;
   }
@@ -446,6 +450,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       receivedAmount = underlying.balanceOf(address(this));
       underlying.transfer(msg.sender, receivedAmount);
     }
+
+    require(receivedAmount > 0, "received amount can not be zerro");
 
     return receivedAmount;
   }
