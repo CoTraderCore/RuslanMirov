@@ -423,11 +423,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   {
     uint256 receivedAmount = 0;
 
-    uint256 amount = (_percent == 100)
-    // if 100 return all
-    ? ERC20(address(_cToken)).balanceOf(msg.sender)
-    // else calculate percent
-    : getPercentFromCTokenBalance(_percent, address(_cToken), msg.sender);
+    uint256 amount = getPercentFromCTokenBalance(_percent, _cToken, msg.sender);
 
     // transfer amount from sender
     ERC20(_cToken).transferFrom(msg.sender, address(this), amount);
@@ -697,7 +693,10 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
    view
    returns(uint256)
   {
-    if(_percent > 0 && _percent <= 100){
+    if(_percent == 100){
+      return ERC20(_cToken).balanceOf(_holder);
+    }
+    else if(_percent > 0 && _percent < 100){
       uint256 currectBalance = ERC20(_cToken).balanceOf(_holder);
       return currectBalance.div(100).mul(_percent);
     }
