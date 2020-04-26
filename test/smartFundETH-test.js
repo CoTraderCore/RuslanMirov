@@ -18,6 +18,9 @@ const ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 const SmartFundETH = artifacts.require('./core/funds/SmartFundETH.sol')
 const TokensTypeStorage = artifacts.require('./core/storage/TokensTypeStorage.sol')
 const ConvertPortal = artifacts.require('./core/portals/ConvertPortal.sol')
+const PermittedExchanges = artifacts.require('./core/verification/PermittedExchanges.sol')
+const PermittedPools = artifacts.require('./core/verification/PermittedPools.sol')
+const PermittedConverts = artifacts.require('./core/verification/PermittedConverts.sol')
 
 // mock
 const Token = artifacts.require('./tokens/Token')
@@ -48,7 +51,10 @@ let xxxERC,
     COT_DAO_WALLET,
     yyyERC,
     tokensType,
-    convertPortal
+    convertPortal,
+    permittedConverts,
+    permittedExchanges,
+    permittedPools
 
 
 
@@ -152,6 +158,11 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     await tokensType.addNewPermittedAddress(exchangePortal.address)
     await tokensType.addNewPermittedAddress(poolPortal.address)
 
+
+    permittedExchanges = await PermittedExchanges.new(exchangePortal.address)
+    permittedPools = await PermittedPools.new(poolPortal.address)
+    permittedConverts = await PermittedConverts.new(convertPortal.address)
+
     // Deploy ETH fund
     smartFundETH = await SmartFundETH.new(
       userOne,                                      // address _owner,
@@ -160,12 +171,12 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       platformFee,                                  // uint256 _platformFee,
       COT_DAO_WALLET.address,                       // address _platformAddress,
       exchangePortal.address,                       // address _exchangePortalAddress,
-      '0x0000000000000000000000000000000000000000', // address _permittedExchangesAddress,
-      '0x0000000000000000000000000000000000000000', // address _permittedPoolsAddress,
+      permittedExchanges.address,                   // address _permittedExchangesAddress,
+      permittedPools.address,                       // address _permittedPoolsAddress,
       poolPortal.address,                           // address _poolPortalAddress,
       convertPortal.address,                        // address of convert portal
       cEther.address,                               // address _cEther
-      '0x0000000000000000000000000000000000000000'  // address _perrmittedConverts
+      permittedConverts.address                     // address _perrmittedConverts
 
     )
 
@@ -1623,8 +1634,53 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       fromWei(userCompoundEtherBalanceBeforeWithdarw),
       fromWei(userCompoundEtherBalanceAfterWithdarw)
     )
+    })
   })
+  
+  describe('Permitted', function() {
+    const testAddress = '0x3710f313d52a52353181311a3584693942d30e8e'
 
+    it('Should not be able change non permitted exchange portal address', async function() {
+      await smartFundETH.setNewExchangePortal(testAddress).should.be.rejectedWith(EVMRevert)
+    })
+
+    it('Should be able change permitted exchange portal address', async function() {
+      await permittedExchanges.addNewExchangeAddress(testAddress)
+      await smartFundETH.setNewExchangePortal(testAddress).should.be.fulfilled
+    })
+
+    it('Should not be able change non permitted pool portal address', async function() {
+      await smartFundETH.setNewPoolPortal(testAddress).should.be.rejectedWith(EVMRevert)
+    })
+
+    it('Should be able change permitted pool portal address', async function() {
+      await permittedPools.addNewPoolAddress(testAddress)
+      await smartFundETH.setNewPoolPortal(testAddress).should.be.fulfilled
+    })
+
+    it('Should not be able change non permitted convert portal address', async function() {
+      await smartFundETH.setNewConvertPortal(testAddress).should.be.rejectedWith(EVMRevert)
+    })
+
+    it('Should be able change permitted stable convert address', async function() {
+      await permittedConverts.addNewConvertAddress(testAddress)
+      await smartFundETH.setNewConvertPortal(testAddress).should.be.fulfilled
+    })
+
+    it('Not owner can not change portals addresses', async function() {
+      await permittedExchanges.addNewExchangeAddress(testAddress)
+      await permittedPools.addNewPoolAddress(testAddress)
+      await permittedConverts.addNewConvertAddress(testAddress)
+
+      await smartFundETH.setNewExchangePortal(testAddress, { from:userTwo })
+      .should.be.rejectedWith(EVMRevert)
+
+      await smartFundETH.setNewPoolPortal(testAddress, { from:userTwo })
+      .should.be.rejectedWith(EVMRevert)
+
+      await smartFundETH.setNewConvertPortal(testAddress, { from:userTwo })
+      .should.be.rejectedWith(EVMRevert)
+    })
   })
   //END
 })
