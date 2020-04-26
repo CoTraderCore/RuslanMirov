@@ -1636,7 +1636,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     )
     })
   })
-  
+
   describe('Permitted', function() {
     const testAddress = '0x3710f313d52a52353181311a3584693942d30e8e'
 

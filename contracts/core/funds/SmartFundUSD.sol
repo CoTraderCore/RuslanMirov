@@ -35,7 +35,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
   * @param _stableCoinAddress            address of stable coin
   * @param _convertPortalAddress         Address of the convert portal
   * @param _cEther                       Address of the cEther
-  * @param _permittedConvertsAddress     Address of the permitted Converts portal 
+  * @param _permittedConvertsAddress     Address of the permitted Converts portal
   */
   constructor(
     address _owner,

@@ -18,6 +18,10 @@ const ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 const SmartFundUSD = artifacts.require('./core/funds/SmartFundUSD.sol')
 const TokensTypeStorage = artifacts.require('./core/storage/TokensTypeStorage.sol')
 const ConvertPortal = artifacts.require('./core/portals/ConvertPortal.sol')
+const PermittedStables = artifacts.require('./core/verification/PermittedStables.sol')
+const PermittedExchanges = artifacts.require('./core/verification/PermittedExchanges.sol')
+const PermittedPools = artifacts.require('./core/verification/PermittedPools.sol')
+const PermittedConverts = artifacts.require('./core/verification/PermittedConverts.sol')
 
 // mock contracts
 const Token = artifacts.require('./tokens/Token')
@@ -50,7 +54,11 @@ let xxxERC,
     sETH,
     sUSD,
     tokensType,
-    convertPortal
+    convertPortal,
+    permittedConverts,
+    permittedExchanges,
+    permittedPools,
+    permittedStables
 
 
 contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
@@ -156,6 +164,12 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     await tokensType.addNewPermittedAddress(exchangePortal.address)
     await tokensType.addNewPermittedAddress(poolPortal.address)
 
+    // permited
+    permittedExchanges = await PermittedExchanges.new(exchangePortal.address)
+    permittedPools = await PermittedPools.new(poolPortal.address)
+    permittedConverts = await PermittedConverts.new(convertPortal.address)
+    permittedStables = await PermittedStables.new(DAI.address)
+
     // Deploy USD fund
     smartFundUSD = await SmartFundUSD.new(
       '0x0000000000000000000000000000000000000000', // address _owner,
@@ -164,14 +178,14 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       platformFee,                                  // uint256 _platformFee,
       COT_DAO_WALLET.address,                       // address _platformAddress,
       exchangePortal.address,                       // address _exchangePortalAddress,
-      '0x0000000000000000000000000000000000000000', // address _permittedExchangesAddress,
-      '0x0000000000000000000000000000000000000000', // address _permittedPoolsAddress,
-      '0x0000000000000000000000000000000000000000', // address _permittedStabels
+      permittedExchanges.address,                   // address _permittedExchangesAddress,
+      permittedPools.address,                       // address _permittedPoolsAddress,
+      permittedStables.address,                     // address _permittedStabels
       poolPortal.address,                           // address _poolPortalAddress,
       DAI.address,                                  // address_stableCoinAddress
       convertPortal.address,                        // address of convert portal
       cEther.address,                               // address _cEther
-      '0x0000000000000000000000000000000000000000'  // address _perrmittedConverts
+      permittedConverts.address                     // address _perrmittedConverts
     )
 
     // send all BNT and UNI pools to portal
@@ -1717,6 +1731,65 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       fromWei(userCompoundUSDBalanceBeforeWithdarw),
       fromWei(userCompoundUSDBalanceAfterWithdarw)
     )
+    })
+  })
+
+  describe('Permitted', function() {
+    const testAddress = '0x3710f313d52a52353181311a3584693942d30e8e'
+
+    it('Should not be able change non permitted exchange portal address', async function() {
+      await smartFundUSD.setNewExchangePortal(testAddress).should.be.rejectedWith(EVMRevert)
+    })
+
+    it('Should be able change permitted exchange portal address', async function() {
+      await permittedExchanges.addNewExchangeAddress(testAddress)
+      await smartFundUSD.setNewExchangePortal(testAddress).should.be.fulfilled
+    })
+
+    it('Should not be able change non permitted pool portal address', async function() {
+      await smartFundUSD.setNewPoolPortal(testAddress).should.be.rejectedWith(EVMRevert)
+    })
+
+    it('Should be able change permitted pool portal address', async function() {
+      await permittedPools.addNewPoolAddress(testAddress)
+      await smartFundUSD.setNewPoolPortal(testAddress).should.be.fulfilled
+    })
+
+    it('Should not be able change non permitted stable portal address', async function() {
+      await smartFundUSD.changeStableCoinAddress(testAddress).should.be.rejectedWith(EVMRevert)
+    })
+
+    it('Should be able change permitted stable portal address', async function() {
+      await permittedStables.addNewStableAddress(testAddress)
+      await smartFundUSD.changeStableCoinAddress(testAddress).should.be.fulfilled
+    })
+
+    it('Should not be able change non permitted convert portal address', async function() {
+      await smartFundUSD.setNewConvertPortal(testAddress).should.be.rejectedWith(EVMRevert)
+    })
+
+    it('Should be able change permitted stable convert address', async function() {
+      await permittedConverts.addNewConvertAddress(testAddress)
+      await smartFundUSD.setNewConvertPortal(testAddress).should.be.fulfilled
+    })
+
+    it('Not owner can not change portals addresses', async function() {
+      await permittedExchanges.addNewExchangeAddress(testAddress)
+      await permittedPools.addNewPoolAddress(testAddress)
+      await permittedStables.addNewStableAddress(testAddress)
+      await permittedConverts.addNewConvertAddress(testAddress)
+
+      await smartFundUSD.setNewExchangePortal(testAddress, { from:userTwo })
+      .should.be.rejectedWith(EVMRevert)
+
+      await smartFundUSD.setNewPoolPortal(testAddress, { from:userTwo })
+      .should.be.rejectedWith(EVMRevert)
+
+      await smartFundUSD.changeStableCoinAddress(testAddress, { from:userTwo })
+      .should.be.rejectedWith(EVMRevert)
+
+      await smartFundUSD.setNewConvertPortal(testAddress, { from:userTwo })
+      .should.be.rejectedWith(EVMRevert)
     })
   })
   // END
