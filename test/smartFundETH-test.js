@@ -1662,7 +1662,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.setNewConvertPortal(testAddress).should.be.rejectedWith(EVMRevert)
     })
 
-    it('Should be able change permitted stable convert address', async function() {
+    it('Should be able change permitted convert address', async function() {
       await permittedConverts.addNewConvertAddress(testAddress)
       await smartFundETH.setNewConvertPortal(testAddress).should.be.fulfilled
     })

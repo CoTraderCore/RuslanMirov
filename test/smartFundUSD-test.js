@@ -1759,16 +1759,26 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       await smartFundUSD.changeStableCoinAddress(testAddress).should.be.rejectedWith(EVMRevert)
     })
 
-    it('Should be able change permitted stable portal address', async function() {
+    it('Should be able change permitted stable coin address', async function() {
       await permittedStables.addNewStableAddress(testAddress)
       await smartFundUSD.changeStableCoinAddress(testAddress).should.be.fulfilled
+    })
+
+    it('Should not be able change stable coin address if some investor did deposit', async function() {
+      await permittedStables.addNewStableAddress(testAddress)
+
+      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
+
+      await smartFundUSD.changeStableCoinAddress(testAddress)
+      .should.be.rejectedWith(EVMRevert)
     })
 
     it('Should not be able change non permitted convert portal address', async function() {
       await smartFundUSD.setNewConvertPortal(testAddress).should.be.rejectedWith(EVMRevert)
     })
 
-    it('Should be able change permitted stable convert address', async function() {
+    it('Should be able change permitted convert portal address', async function() {
       await permittedConverts.addNewConvertAddress(testAddress)
       await smartFundUSD.setNewConvertPortal(testAddress).should.be.fulfilled
     })
