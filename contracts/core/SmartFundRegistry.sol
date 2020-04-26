@@ -190,7 +190,7 @@ contract SmartFundRegistry is Ownable {
   *
   * @param _convertPortalAddress    Address of the new convert portal to be set
   */
-  function setConvertPortalAddress (address _convertPortalAddress) external onlyOwner {
+  function setConvertPortalAddress(address _convertPortalAddress) external onlyOwner {
     // Require that the new convert portal is permitted by permittedConverts
     require(permittedConverts.permittedAddresses(_convertPortalAddress));
 
@@ -221,7 +221,7 @@ contract SmartFundRegistry is Ownable {
   *
   * @param _stableCoinAddress    New stable address
   */
-  function changeStableCoinAddress(address _stableCoinAddress) external onlyOwner {
+  function setStableCoinAddress(address _stableCoinAddress) external onlyOwner {
     require(permittedStables.permittedAddresses(_stableCoinAddress));
     stableCoinAddress = _stableCoinAddress;
   }
