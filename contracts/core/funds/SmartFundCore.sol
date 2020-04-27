@@ -122,11 +122,16 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   mapping (address => int256) public addressesNetDeposit;
 
   // Events
+  event Loan(address token, uint256 amount);
+  event Redeem(address token, uint256 amount);
+
   event BuyPool(address poolToken, uint256 amount);
   event SellPool(address poolToken, uint256 amount);
+
   event Deposit(address indexed user, uint256 amount, uint256 sharesReceived, uint256 totalShares);
   event Withdraw(address indexed user, uint256 sharesRemoved, uint256 totalShares);
   event Trade(address src, uint256 srcAmount, address dest, uint256 destReceived);
+
   event SmartFundCreated(address indexed owner);
 
   // enum
@@ -605,6 +610,8 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
 
     if(receivedAmount > 0)
        _addToken(_cToken);
+
+    emit Loan(_cToken, _amount);
   }
 
   /**
@@ -634,6 +641,8 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
 
       _addToken(underlying);
     }
+
+    emit Redeem(_cToken, receivedAmount);
   }
 
   /**

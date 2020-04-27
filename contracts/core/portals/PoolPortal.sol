@@ -35,6 +35,10 @@ contract PoolPortal {
   // NOTE: You can add a new type at the end, but do not change this order
   enum PortalType { Bancor, Uniswap }
 
+  // events
+  event BuyPool(address poolToken, uint256 amount, address trader);
+  event SellPool(address poolToken, uint256 amount, address trader);
+
   // Contract for handle tokens types
   ITokensTypeStorage public tokensTypes;
 
@@ -92,6 +96,8 @@ contract PoolPortal {
       // unknown portal type
       revert();
     }
+
+    emit BuyPool(address(_poolToken), _amount, msg.sender);
   }
 
 
@@ -228,6 +234,8 @@ contract PoolPortal {
       // unknown portal type
       revert();
     }
+
+    emit SellPool(address(_poolToken), _amount, msg.sender);
   }
 
   /**
