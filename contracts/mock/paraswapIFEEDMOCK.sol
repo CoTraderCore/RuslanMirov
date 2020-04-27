@@ -27,6 +27,48 @@ contract paraswapIFEEDMOCK{
   }
 
 
+  function getRealPriceFromBancor(address _from, address _to, uint256 _amount) public view returns(uint256 result){
+   // get latest contracts
+   PathFinderInterface pathFinder = PathFinderInterface(
+     bancorRegistry.getBancorContractAddresByName("BancorNetworkPathFinder")
+   );
+
+   BancorNetworkInterface bancorNetwork = BancorNetworkInterface(
+     bancorRegistry.getBancorContractAddresByName("BancorNetwork")
+   );
+
+   // Change dest to Bancor ETH wrapper
+   address dest = ERC20(_to) == ETH_TOKEN_ADDRESS ? BancorEtherToken : _to;
+
+   // get Bancor path array
+   address[] memory path = pathFinder.generatePath(_from, dest);
+
+   // return mock if empty array
+   if(path.length == 0) return 0;
+
+   ERC20[] memory pathInERC20 = new ERC20[](path.length);
+
+   // Convert addresses to ERC20
+   for(uint i=0; i<path.length; i++){
+       pathInERC20[i] = ERC20(path[i]);
+   }
+
+   // try get real price 
+   (bool success) = address(bancorNetwork).call(
+   abi.encodeWithSelector(bancorNetwork.getReturnByPath.selector, pathInERC20, _amount));
+
+   if(success){
+     // get Ratio
+     ( uint256 ratio, ) = bancorNetwork.getReturnByPath(pathInERC20, _amount);
+
+     result = ratio;
+   }
+   else{
+     return 0;
+   }
+ }
+
+
   /**
   * @dev get ratio between Bancor assets
   *
@@ -36,30 +78,15 @@ contract paraswapIFEEDMOCK{
   */
   function getBestPriceSimple(address _from, address _to, uint256 _amount) public view returns(uint256 result){
     if(_amount > 0){
-      // get latest contracts
-      PathFinderInterface pathFinder = PathFinderInterface(
-        bancorRegistry.getBancorContractAddresByName("BancorNetworkPathFinder")
-      );
+      // Try get real pricefrom Bancor
+      uint256 ratio = getRealPriceFromBancor(_from, _to, _amount);
 
-      BancorNetworkInterface bancorNetwork = BancorNetworkInterface(
-        bancorRegistry.getBancorContractAddresByName("BancorNetwork")
-      );
-
-      // Change dest to Bancor ETH wrapper
-      address dest = ERC20(_to) == ETH_TOKEN_ADDRESS ? BancorEtherToken : _to;
-
-      // get Bancor path array
-      address[] memory path = pathFinder.generatePath(_from, dest);
-      ERC20[] memory pathInERC20 = new ERC20[](path.length);
-
-      // Convert addresses to ERC20
-      for(uint i=0; i<path.length; i++){
-          pathInERC20[i] = ERC20(path[i]);
+      if(ratio > 0){
+        result = getRealPriceFromBancor(_from, _to, _amount);
+      }else{
+        // return mock price
+        result = _amount;
       }
-
-      // get Ratio
-      ( uint256 ratio, ) = bancorNetwork.getReturnByPath(pathInERC20, _amount);
-      result = ratio;
     }
     else{
       result = 0;
