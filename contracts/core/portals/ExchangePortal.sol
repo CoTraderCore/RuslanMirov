@@ -423,7 +423,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   {
     uint256 receivedAmount = 0;
 
-    uint256 amount = getPercentFromCTokenBalance(_percent, _cToken, msg.sender);
+    uint256 amount = getPercentFromCTokenBalanceAmount(_percent, _cToken, msg.sender);
 
     // transfer amount from sender
     ERC20(_cToken).transferFrom(msg.sender, address(this), amount);
@@ -469,7 +469,11 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   *
   * @return best price from Paraswap or 1inch for ERC20, or ratio for Uniswap and Bancor pools
   */
-  function getValue(address _from, address _to, uint256 _amount) public view returns (uint256){
+  function getValueIn(address _from, address _to, uint256 _amount)
+    private
+    view
+    returns (uint256)
+  {
     if(_amount > 0){
       if(tokensTypes.getType(_from) == bytes32("CRYPTOCURRENCY")){
         uint256 valueFromOneInch = getValueViaOneInch(_from, _to, _amount);
@@ -498,6 +502,16 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
   }
 
+  // external call for getValue
+
+  function getValue(address _from, address _to, uint256 _amount)
+    external
+    view
+    returns (uint256)
+  {
+    return getValueIn(_from, _to, _amount);
+  }
+
   /**
   * @dev find the ratio by amount of token _from in token _to trying all available methods
   *
@@ -507,7 +521,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   *
   * @return best price from Paraswap or 1inch for ERC20, or ratio for Uniswap and Bancor pools
   */
-  function findValue(address _from, address _to, uint256 _amount) public view returns (uint256) {
+  function findValue(address _from, address _to, uint256 _amount) private view returns (uint256) {
      if(_amount > 0){
        // If Paraswap return 0, check from 1inch for ensure
        uint256 paraswapResult = getValueViaParaswap(_from, _to, _amount);
@@ -542,7 +556,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _from,
     address _to,
     uint256 _amount
-  ) public view returns (uint256 value) {
+  )
+  public view returns (uint256 value) {
     // Check call Paraswap (Because Paraswap can return error for some not supported  assets)
     (bool success) = address(priceFeedInterface).call(
     abi.encodeWithSelector(priceFeedInterface.getBestPriceSimple.selector, _from, _to, _amount));
@@ -688,8 +703,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _cToken        cToken address
   * @param _holder        address of cToken holder
   */
-  function getPercentFromCTokenBalance(uint _percent, address _cToken, address _holder)
-   public
+  function getPercentFromCTokenBalanceAmount(uint _percent, address _cToken, address _holder)
+   private
    view
    returns(uint256)
   {
@@ -706,7 +721,17 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
   }
 
-  function getCTokenUnderlying(address _cToken) public view returns(address){
+  // external call for getPercentFromCTokenBalanceAmount
+  function getPercentFromCTokenBalance(uint _percent, address _cToken, address _holder)
+   external
+   view
+   returns(uint256)
+  {
+   return getPercentFromCTokenBalanceAmount(_percent, cToken, _holder);
+  }
+
+  // get underlying by cToken
+  function getCTokenUnderlying(address _cToken) external view returns(address){
     return CToken(_cToken).underlying();
   }
 
@@ -718,7 +743,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   function compoundGetCTokenValue(
     address _cToken
   )
-    public
+    external
     view
     returns(uint256 result)
   {
@@ -744,7 +769,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   {
     uint256 sum = 0;
     for (uint256 i = 0; i < _fromAddresses.length; i++) {
-      sum = sum.add(getValue(_fromAddresses[i], _to, _amounts[i]));
+      sum = sum.add(getValueIn(_fromAddresses[i], _to, _amounts[i]));
     }
     return sum;
   }
@@ -791,6 +816,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   }
 
   // fallback payable function to receive ether from other contract addresses
-  function() public payable {}
+  fallback() external payable {}
 
 }
