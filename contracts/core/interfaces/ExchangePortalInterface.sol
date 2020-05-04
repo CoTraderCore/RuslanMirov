@@ -1,6 +1,6 @@
 import "../../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
-contract ExchangePortalInterface {
+interface ExchangePortalInterface {
 
   event Trade(address src, uint256 srcAmount, address dest, uint256 destReceived);
 
@@ -9,8 +9,8 @@ contract ExchangePortalInterface {
     uint256 _sourceAmount,
     ERC20 _destination,
     uint256 _type,
-    bytes32[] _additionalArgs,
-    bytes _additionalData
+    bytes32[] calldata _additionalArgs,
+    bytes calldata _additionalData
   )
     external
     payable
@@ -27,9 +27,13 @@ contract ExchangePortalInterface {
 
   function getValue(address _from, address _to, uint256 _amount) public view returns (uint256);
 
-  function getTotalValue(address[] _fromAddresses, uint256[] _amounts, address _to)
-   public
-   view
+  function getTotalValue(
+    address[] calldata _fromAddresses,
+    uint256[] calldata _amounts,
+    address _to
+    )
+    external
+    view
    returns (uint256);
 
    function getCTokenUnderlying(address _cToken) public view returns(address);

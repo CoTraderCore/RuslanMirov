@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 
 /*
   The SmartFund contract is what holds all the tokens and ether, and contains all the logic
@@ -21,14 +21,14 @@ import "../interfaces/PermittedExchangesInterface.sol";
 import "../interfaces/PermittedPoolsInterface.sol";
 import "../interfaces/PermittedConvertsInterface.sol";
 
-import "../interfaces/SmartFundOverrideInterface.sol";
+import "../abstracts/SmartFundVirtual.sol";
 
 import "../../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
-contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
+contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   using SafeMath for uint256;
   using SafeERC20 for ERC20;
 
@@ -139,7 +139,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
 
   constructor(
     address _owner,
-    string  _name,
+    string memory _name,
     uint256 _successFee,
     uint256 _platformFee,
     address _platformAddress,
@@ -363,8 +363,8 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     uint256 _sourceAmount,
     ERC20 _destination,
     uint256 _type,
-    bytes32[] _additionalArgs,
-    bytes _additionalData,
+    bytes32[] calldata _additionalArgs,
+    bytes calldata _additionalData,
     uint256 _minReturn
   ) external onlyOwner {
     require(_minReturn > 0, "min return should be more than 0");
@@ -543,7 +543,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     _addToken(tokenAddress);
   }
 
-  function getAllTokenAddresses() public view returns (address[]) {
+  function getAllTokenAddresses() external view returns (address[] memory) {
     return tokenAddresses;
   }
 
@@ -654,11 +654,11 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   }
 
   // get all fund data in one call
-  function getSmartFundData() public view returns (
+  function getSmartFundData() external view returns (
     address _owner,
-    string _name,
+    string memory _name,
     uint256 _totalShares,
-    address[] _tokenAddresses,
+    address[] memory _tokenAddresses,
     uint256 _successFee
   ) {
     _owner = owner;
@@ -878,7 +878,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   }
 
   // Fallback payable function in order to be able to receive ether from other contracts
-  function() public payable {}
+  fallback() external payable {}
 
   /**
     **************************** ERC20 Compliance ****************************

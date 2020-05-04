@@ -148,8 +148,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     uint256 _sourceAmount,
     ERC20 _destination,
     uint256 _type,
-    bytes32[] _additionalArgs,
-    bytes _additionalData
+    bytes32[] calldata _additionalArgs,
+    bytes calldata _additionalData
   )
     external
     payable
@@ -734,7 +734,14 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   *
   * @return The total value of _fromAddresses and _amounts in terms of _to
   */
-  function getTotalValue(address[] _fromAddresses, uint256[] _amounts, address _to) public view returns (uint256) {
+  function getTotalValue(
+    address[] calldata _fromAddresses,
+    uint256[] calldata _amounts,
+    address _to)
+    external
+    view
+    returns (uint256)
+  {
     uint256 sum = 0;
     for (uint256 i = 0; i < _fromAddresses.length; i++) {
       sum = sum.add(getValue(_fromAddresses[i], _to, _amounts[i]));
