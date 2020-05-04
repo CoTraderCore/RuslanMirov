@@ -21,16 +21,14 @@ import "../interfaces/PermittedExchangesInterface.sol";
 import "../interfaces/PermittedPoolsInterface.sol";
 import "../interfaces/PermittedConvertsInterface.sol";
 
-import "../abstracts/SmartFundVirtual.sol";
-
-import "../../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../../zeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
-contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
+abstract contract SmartFundCore is Ownable, IERC20 {
   using SafeMath for uint256;
-  using SafeERC20 for ERC20;
+  using SafeERC20 for IERC20;
 
   // Total amount of ether or stable deposited by all users
   uint256 public totalWeiDeposited = 0;
@@ -57,7 +55,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   PermittedConvertsInterface public permittedConverts;
 
   // KyberExchange recognizes ETH by this address
-  ERC20 constant internal ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
+  IERC20 constant internal ETH_TOKEN_ADDRESS = IERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
 
   // For ERC20 compliance
   string public name;
@@ -191,6 +189,12 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
     emit SmartFundCreated(owner);
   }
 
+  // virtual methods
+  // DAI and ETH have different implements of this methods
+  function calculateFundValue() public virtual view returns (uint256);
+  function getTokenValue(IERC20 _token) public virtual view returns (uint256);
+
+
   /**
   * @dev Sends (_mul/_div) of every token (and ether) the funds holds to _withdrawAddress
   *
@@ -214,7 +218,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   {
     for (uint8 i = 1; i < tokenAddresses.length; i++) {
       // Transfer that _mul/_div of each token we hold to the user
-      ERC20 token = ERC20(tokenAddresses[i]);
+      IERC20 token = IERC20(tokenAddresses[i]);
       uint256 fundAmount = token.balanceOf(address(this));
 
       // Transfer ERC20 to _withdrawAddress
@@ -279,7 +283,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
         _receiver)
       );
     }else{
-      ERC20(_source).approve(address(convertPortal), _amount);
+      IERC20(_source).approve(address(convertPortal), _amount);
       (success) = address(convertPortal).call(
       abi.encodeWithSelector(convertPortal.convert.selector,
         _source,
@@ -293,7 +297,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
       if(_source == address(ETH_TOKEN_ADDRESS)){
         _receiver.transfer(_amount);
       }else{
-        ERC20(_source).transfer(_receiver, _amount);
+        IERC20(_source).transfer(_receiver, _amount);
       }
    }
  }
@@ -359,9 +363,9 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   * @param _minReturn         Min expected amount of destination
   */
   function trade(
-    ERC20 _source,
+    IERC20 _source,
     uint256 _sourceAmount,
-    ERC20 _destination,
+    IERC20 _destination,
     uint256 _type,
     bytes32[] calldata _additionalArgs,
     bytes calldata _additionalData,
@@ -412,7 +416,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   function buyPool(
    uint256 _amount,
    uint _type,
-   ERC20 _poolToken
+   IERC20 _poolToken
   )
   external onlyOwner {
    // buy Bancor or Uniswap pool
@@ -438,12 +442,12 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   function _buyUniswapPool(
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken
+    IERC20 _poolToken
   )
   private
   {
     // approve connector
-    ERC20 token = ERC20(poolPortal.getTokenByUniswapExchange(_poolToken));
+    IERC20 token = IERC20(poolPortal.getTokenByUniswapExchange(_poolToken));
     token.approve(address(poolPortal), token.balanceOf(address(this)));
 
     // buy pool via ETH amount payable
@@ -461,12 +465,12 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   function _buyBancorPool(
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken
+    IERC20 _poolToken
   ) private
   {
     // get connectors
-    (ERC20 bancorConnector,
-       ERC20 ercConnector) = poolPortal.getBancorConnectorsByRelay(address(_poolToken));
+    (IERC20 bancorConnector,
+       IERC20 ercConnector) = poolPortal.getBancorConnectorsByRelay(address(_poolToken));
 
     // Approve all connectors to pool portal (pool calculates the required amount dynamicly)
     bancorConnector.approve(address(poolPortal), bancorConnector.balanceOf(address(this)));
@@ -495,7 +499,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   function sellPool(
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken
+    IERC20 _poolToken
   )
   external onlyOwner {
     // approve
@@ -524,8 +528,8 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   private
   {
     // get bancor connectors addresses
-    (ERC20 bancorConnector,
-      ERC20 ercConnector) = poolPortal.getBancorConnectorsByRelay(
+    (IERC20 bancorConnector,
+      IERC20 ercConnector) = poolPortal.getBancorConnectorsByRelay(
         address(_poolToken));
 
     // add returned assets in fund as tokens (for case if manager removed this assets)
@@ -573,7 +577,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   function removeToken(address _token, uint256 _tokenIndex) public onlyOwner {
     require(_token != address(ETH_TOKEN_ADDRESS));
     require(tokensTraded[_token]);
-    require(ERC20(_token).balanceOf(address(this)) == 0);
+    require(IERC20(_token).balanceOf(address(this)) == 0);
     require(tokenAddresses[_tokenIndex] == _token);
 
     tokensTraded[_token] = false;
@@ -601,7 +605,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
       );
     }else{
       address underlying = exchangePortal.getCTokenUnderlying(_cToken);
-      ERC20(underlying).approve(address(exchangePortal), _amount);
+      IERC20(underlying).approve(address(exchangePortal), _amount);
       receivedAmount = exchangePortal.compoundMint(
         _amount,
         _cToken
@@ -627,7 +631,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
       address(this)
     );
 
-    ERC20(_cToken).approve(address(exchangePortal), amount);
+    IERC20(_cToken).approve(address(exchangePortal), amount);
 
     uint256 receivedAmount = exchangePortal.compoundRedeemByPercent(
       _percent,
@@ -786,7 +790,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   }
 
   // This method was added to easily record the funds token balances, may (should?) be removed in the future
-  function getFundTokenHolding(ERC20 _token) external view returns (uint256) {
+  function getFundTokenHolding(IERC20 _token) external view returns (uint256) {
     if (_token == ETH_TOKEN_ADDRESS)
       return address(this).balance;
     return _token.balanceOf(address(this));
@@ -860,7 +864,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
     if (_token == address(ETH_TOKEN_ADDRESS)) {
       msg.sender.transfer(address(this).balance);
     } else {
-      ERC20(_token).transfer(msg.sender, ERC20(_token).balanceOf(address(this)));
+      IERC20(_token).transfer(msg.sender, IERC20(_token).balanceOf(address(this)));
     }
   }
 
@@ -874,7 +878,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   * @param _spender                 address of spender
   */
   function resetApprove(address _token, address _spender) external onlyOwner {
-    ERC20(_token).approve(_spender, 0);
+    IERC20(_token).approve(_spender, 0);
   }
 
   // Fallback payable function in order to be able to receive ether from other contracts
@@ -901,7 +905,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   /**
   * @dev Total number of shares in existence
   */
-  function totalSupply() public view returns (uint256) {
+  function totalSupply() external override view returns (uint256) {
     return totalShares;
   }
 
@@ -912,7 +916,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   *
   * @return A uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _who) public view returns (uint256) {
+  function balanceOf(address _who) external override view returns (uint256) {
     return addressToShares[_who];
   }
 
@@ -924,7 +928,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
   *
   * @return true upon success
   */
-  function transfer(address _to, uint256 _value) public returns (bool) {
+  function transfer(address _to, uint256 _value) external override returns (bool) {
     require(_to != address(0));
     require(_value <= addressToShares[msg.sender]);
 
@@ -943,7 +947,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
    *
    * @return true upon success
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) external override returns (bool) {
     require(_to != address(0));
     require(_value <= addressToShares[_from]);
     require(_value <= allowed[_from][msg.sender]);
@@ -967,7 +971,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
    *
    * @return true upon success
    */
-  function approve(address _spender, uint256 _value) public returns (bool) {
+  function approve(address _spender, uint256 _value) external override returns (bool) {
     allowed[msg.sender][_spender] = _value;
     emit Approval(msg.sender, _spender, _value);
     return true;
@@ -981,7 +985,7 @@ contract SmartFundCore is SmartFundVirtual, Ownable, ERC20 {
    *
    * @return A uint256 specifying the amount of shares still available for the spender.
    */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
+  function allowance(address _owner, address _spender) external override view returns (uint256) {
     return allowed[_owner][_spender];
   }
 }
