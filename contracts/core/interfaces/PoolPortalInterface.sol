@@ -1,11 +1,11 @@
-import "../../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../../zeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
-contract PoolPortalInterface {
+interface PoolPortalInterface {
   function buyPool
   (
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken
+    IERC20 _poolToken
   )
   external
   payable;
@@ -14,13 +14,13 @@ contract PoolPortalInterface {
   (
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken
+    IERC20 _poolToken
   )
   external
   payable;
 
   function getBacorConverterAddressByRelay(address relay)
-  public
+  external
   view
   returns(address converter);
 
@@ -29,18 +29,18 @@ contract PoolPortalInterface {
     uint256 _amount,
     ERC20 _relay
   )
-  public view returns(uint256 bancorAmount, uint256 connectorAmount);
+  external view returns(uint256 bancorAmount, uint256 connectorAmount);
 
   function getBancorConnectorsByRelay(address relay)
-  public
+  external
   view
   returns(
-    ERC20 BNTConnector,
-    ERC20 ERCConnector
+    IERC20 BNTConnector,
+    IERC20 ERCConnector
   );
 
   function getBancorRatio(address _from, address _to, uint256 _amount)
-  public
+  external
   view
   returns(uint256);
 
@@ -48,17 +48,17 @@ contract PoolPortalInterface {
     uint256 _amount,
     address _exchange
   )
-  public
+  external
   view
   returns(uint256 ethAmount, uint256 ercAmount);
 
   function getUniswapTokenAmountByETH(address _token, uint256 _amount)
-  public
+  external
   view
   returns(uint256);
 
   function getTokenByUniswapExchange(address _exchange)
-  public
+  external
   view
   returns(address);
 }

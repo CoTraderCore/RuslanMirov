@@ -109,16 +109,16 @@ contract PoolPortal {
   */
   function buyBancorPool(ERC20 _poolToken, uint256 _amount) private {
     // get Bancor converter
-    address converterAddress = getBacorConverterAddressByRelay(address(_poolToken));
+    address converterAddress = getBacorConverterAddressByRelayAddress(address(_poolToken));
     // calculate connectors amount for buy certain pool amount
     (uint256 bancorAmount,
-     uint256 connectorAmount) = getBancorConnectorsAmountByRelayAmount(_amount, _poolToken);
+     uint256 connectorAmount) = getBancorConnectorsAmountByRelayInputAmount(_amount, _poolToken);
     // get converter as contract
     BancorConverterInterface converter = BancorConverterInterface(converterAddress);
     // approve bancor and coonector amount to converter
     // get connectors
     (ERC20 bancorConnector,
-    ERC20 ercConnector) = getBancorConnectorsByRelay(address(_poolToken));
+    ERC20 ercConnector) = getBancorConnectorsByRelayAddress(address(_poolToken));
     // reset approve (some ERC20 not allow do new approve if already approved)
     bancorConnector.approve(converterAddress, 0);
     ercConnector.approve(converterAddress, 0);
@@ -161,7 +161,7 @@ contract PoolPortal {
     // check if such a pool exist
     if(tokenAddress != address(0x0000000000000000000000000000000000000000)){
       // get tokens amd approve to exchange
-      uint256 erc20Amount = getUniswapTokenAmountByETH(tokenAddress, _ethAmount);
+      uint256 erc20Amount = getUniswapTokenAmountByETHAmount(tokenAddress, _ethAmount);
       _transferFromSenderAndApproveTo(ERC20(tokenAddress), erc20Amount, _poolToken);
       // get exchange contract
       UniswapExchangeInterface exchange = UniswapExchangeInterface(_poolToken);
@@ -197,14 +197,23 @@ contract PoolPortal {
   * @param _token     address of ERC20 token
   * @param _amount    ETH amount (in wei)
   */
-  function getUniswapTokenAmountByETH(address _token, uint256 _amount)
-  public
-  view
-  returns(uint256)
+  function getUniswapTokenAmountByETHAmount(address _token, uint256 _amount)
+    private
+    view
+    returns(uint256)
   {
     UniswapExchangeInterface exchange = UniswapExchangeInterface(
       uniswapFactory.getExchange(_token));
     return exchange.getTokenToEthOutputPrice(_amount);
+  }
+
+  // external call getUniswapTokenAmountByETHAmount
+  function getUniswapTokenAmountByETH(address _token, uint256 _amount)
+    external
+    view
+    returns(uint256)
+  {
+    return getUniswapTokenAmountByETHAmount(_token, _amount);
   }
 
 
@@ -248,12 +257,12 @@ contract PoolPortal {
     // transfer pool from fund
     _poolToken.transferFrom(msg.sender, address(this), _amount);
     // get Bancor Converter address
-    address converterAddress = getBacorConverterAddressByRelay(address(_poolToken));
+    address converterAddress = getBacorConverterAddressByRelayAddress(address(_poolToken));
     // liquidate relay
     BancorConverterInterface(converterAddress).liquidate(_amount);
     // get connectors
     (ERC20 bancorConnector,
-    ERC20 ercConnector) = getBancorConnectorsByRelay(address(_poolToken));
+    ERC20 ercConnector) = getBancorConnectorsByRelayAddress(address(_poolToken));
     // transfer connectors back to fund
     bancorConnector.transfer(msg.sender, bancorConnector.balanceOf(this));
     ercConnector.transfer(msg.sender, ercConnector.balanceOf(this));
@@ -275,7 +284,7 @@ contract PoolPortal {
       _transferFromSenderAndApproveTo(ERC20(_poolToken), _amount, _poolToken);
       // get min returns
       (uint256 minEthAmount,
-        uint256 minErcAmount) = getUniswapConnectorsAmountByPoolAmount(
+        uint256 minErcAmount) = getUniswapConnectorsAmountByPoolInputAmount(
           _amount,
           address(_poolToken));
       // set deadline
@@ -300,12 +309,21 @@ contract PoolPortal {
   *
   * @param _relay       address of bancor relay
   */
-  function getBacorConverterAddressByRelay(address _relay)
-  public
-  view
-  returns(address converter)
+  function getBacorConverterAddressByRelayAddress(address _relay)
+    private
+    view
+    returns(address converter)
   {
     converter = SmartTokenInterface(_relay).owner();
+  }
+
+  // for external call getBacorConverterAddressByRelayAddress
+  function getBacorConverterAddressByRelay(address _relay)
+    external
+    view
+    returns(address converter)
+  {
+    converter = getBacorConverterAddressByRelayAddress(_relay);
   }
 
   /**
@@ -313,18 +331,31 @@ contract PoolPortal {
   *
   * @param _relay       address of bancor relay
   */
-  function getBancorConnectorsByRelay(address _relay)
-  public
-  view
-  returns(
+  function getBancorConnectorsByRelayAddress(address _relay)
+    private
+    view
+    returns(
     ERC20 BNTConnector,
     ERC20 ERCConnector
-  )
+    )
   {
-    address converterAddress = getBacorConverterAddressByRelay(_relay);
+    address converterAddress = getBacorConverterAddressByRelayAddress(_relay);
     BancorConverterInterface converter = BancorConverterInterface(converterAddress);
     BNTConnector = converter.connectorTokens(0);
     ERCConnector = converter.connectorTokens(1);
+  }
+
+  // external call getBancorConnectorsByRelayAddress
+  function getBancorConnectorsByRelay(address _relay)
+    external
+    view
+    returns(
+    ERC20 BNTConnector,
+    ERC20 ERCConnector
+    )
+  {
+    (ERC20 BNTConnector,
+     ERC20 ERCConnector) = getBancorConnectorsByRelayAddress(_relay);
   }
 
 
@@ -334,9 +365,9 @@ contract PoolPortal {
   * @param _exchange       address of uniswap exchane
   */
   function getTokenByUniswapExchange(address _exchange)
-  public
-  view
-  returns(address)
+    external
+    view
+    returns(address)
   {
     return uniswapFactory.getToken(_exchange);
   }
@@ -348,13 +379,13 @@ contract PoolPortal {
   * @param _amount         relay amount
   * @param _exchange       address of uniswap exchane
   */
-  function getUniswapConnectorsAmountByPoolAmount(
+  function getUniswapConnectorsAmountByPoolInputAmount(
     uint256 _amount,
     address _exchange
   )
-  public
-  view
-  returns(uint256 ethAmount, uint256 ercAmount)
+    private
+    view
+    returns(uint256 ethAmount, uint256 ercAmount)
   {
     ERC20 token = ERC20(uniswapFactory.getToken(_exchange));
     // total_liquidity exchange.totalSupply
@@ -366,18 +397,38 @@ contract PoolPortal {
   }
 
 
+  // external call getUniswapConnectorsAmountByPoolInputAmount
+  function getUniswapConnectorsAmountByPoolAmount(
+    uint256 _amount,
+    address _exchange
+  )
+    external
+    view
+    returns(uint256 ethAmount, uint256 ercAmount)
+  {
+     (uint256 ethAmount,
+      uint256 ercAmount) = getUniswapConnectorsAmountByPoolInputAmount(
+        _amount,
+        _exchange
+      );
+  }
+
+
   /**
   * @dev helper for get amount for both Bancor connectors for input amount of pool
   *
   * @param _amount      relay amount
   * @param _relay       address of bancor relay
   */
-  function getBancorConnectorsAmountByRelayAmount
+  function getBancorConnectorsAmountByRelayInputAmount
   (
     uint256 _amount,
     ERC20 _relay
   )
-  public view returns(uint256 bancorAmount, uint256 connectorAmount) {
+    private
+    view
+    returns(uint256 bancorAmount, uint256 connectorAmount)
+  {
     // get converter contract
     BancorConverterInterface converter = BancorConverterInterface(
       SmartTokenInterface(_relay).owner());
@@ -404,6 +455,22 @@ contract PoolPortal {
        _amount);
   }
 
+  // for external call getBancorConnectorsAmountByRelayInputAmount
+  function getBancorConnectorsAmountByRelayAmount
+  (
+    uint256 _amount,
+    ERC20 _relay
+  )
+    external
+    view
+    returns(uint256 bancorAmount, uint256 connectorAmount)
+  {
+    return getBancorConnectorsAmountByRelayInputAmount(
+       bancorAmount,
+       connectorAmount
+      );
+  }
+
   /**
   * @dev helper for get ratio between assets in bancor newtork
   *
@@ -412,7 +479,7 @@ contract PoolPortal {
   * @param _amount    amount from
   */
   function getBancorRatio(address _from, address _to, uint256 _amount)
-  public
+  external
   view
   returns(uint256)
   {
@@ -447,5 +514,5 @@ contract PoolPortal {
   }
 
   // fallback payable function to receive ether from other contract addresses
-  function() public payable {}
+  fallback() external payable {}
 }
