@@ -22,7 +22,7 @@ import "../interfaces/PermittedPoolsInterface.sol";
 import "../interfaces/PermittedConvertsInterface.sol";
 
 import "../../zeppelin-solidity/contracts/token/ERC20/IERC20.sol";
-import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../../zeppelin-solidity/contracts/access/Ownable.sol";
 import "../../zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
@@ -159,10 +159,10 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     platformFee = _platformFee;
 
     if(_owner == address(0)){
-      owner = msg.sender;
+      transferOwnership(msg.sender);
     }
     else{
-      owner = _owner;
+      transferOwnership(_owner);
     }
 
     if(_platformAddress == address(0)){
@@ -186,7 +186,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     cEther = _cEther;
     coreFundAsset = _coreFundAsset;
 
-    emit SmartFundCreated(owner);
+    emit SmartFundCreated(owner());
   }
 
   // virtual methods
@@ -641,7 +641,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
 
     if(receivedAmount > 0){
       address underlying = (_cToken == cEther)
-      ? ETH_TOKEN_ADDRESS
+      ? address(ETH_TOKEN_ADDRESS)
       : exchangePortal.getCTokenUnderlying(_cToken);
 
       _addToken(underlying);
@@ -666,7 +666,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     address[] memory _tokenAddresses,
     uint256 _successFee
   ) {
-    _owner = owner;
+    _owner = owner();
     _name = name;
     _totalShares = totalShares;
     _tokenAddresses = tokenAddresses;
@@ -758,7 +758,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     // prepare call data for _withdarw
     address[] memory spenders = new address[](2);
     spenders[0] = platformAddress;
-    spenders[1] = owner;
+    spenders[1] = owner();
 
     uint256[] memory value = new uint256[](2);
     value[0] = fundValue;
