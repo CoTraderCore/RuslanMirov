@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
-contract CToken {
-    address public underlying;
+interface CToken {
+    function underlying() external view returns(address);
     function transfer(address dst, uint256 amount) external returns (bool);
     function transferFrom(address src, address dst, uint256 amount) external returns (bool);
     function approve(address spender, uint256 amount) external returns (bool);

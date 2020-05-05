@@ -8,9 +8,8 @@ pragma solidity ^0.6.0;
   Also get ratio for Bancor and Uniswap pools, Syntetix and Compound assets
 */
 
-import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../../zeppelin-solidity/contracts/access/Ownable.sol";
 import "../../zeppelin-solidity/contracts/math/SafeMath.sol";
-import "../../zeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
 
 import "../../paraswap/interfaces/ParaswapInterface.sol";
 import "../../paraswap/interfaces/IPriceFeed.sol";
@@ -233,8 +232,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address sourceToken,
     address destinationToken,
     uint256 sourceAmount,
-    bytes   exchangeData,
-    bytes32[] _additionalArgs
+    bytes memory exchangeData,
+    bytes32[] memory _additionalArgs
  )
    private
    returns (uint256 destinationReceived)
@@ -788,7 +787,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   }
 
   // Exchange portal can mark each token
-  function setTokenType(address _token, string _type) private {
+  function setTokenType(address _token, string memory _type) private {
     // no need add type, if token alredy registred
     if(tokensTypes.isRegistred(_token))
       return;
