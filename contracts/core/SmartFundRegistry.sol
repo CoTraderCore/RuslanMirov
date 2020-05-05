@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 
 import "./interfaces/SmartFundETHFactoryInterface.sol";
 import "./interfaces/SmartFundUSDFactoryInterface.sol";
@@ -6,8 +6,8 @@ import "./interfaces/PermittedExchangesInterface.sol";
 import "./interfaces/PermittedPoolsInterface.sol";
 import "./interfaces/PermittedStablesInterface.sol";
 import "./interfaces/PermittedConvertsInterface.sol";
-import "../zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../zeppelin-solidity/contracts/access/Ownable.sol";
+import "../zeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 /*
 * The SmartFundRegistry is used to manage the creation and permissions of SmartFund contracts
 */
@@ -98,7 +98,7 @@ contract SmartFundRegistry is Ownable {
   * @param _isStableBasedFund  true for USD base fund, false for ETH base
   */
   function createSmartFund(
-    string _name,
+    string memory _name,
     uint256 _successFee,
     bool _isStableBasedFund
   ) public {
@@ -150,7 +150,7 @@ contract SmartFundRegistry is Ownable {
     return smartFunds.length;
   }
 
-  function getAllSmartFundAddresses() public view returns(address[]) {
+  function getAllSmartFundAddresses() public view returns(address[] memory) {
     address[] memory addresses = new address[](smartFunds.length);
 
     for (uint i; i < smartFunds.length; i++) {
@@ -232,19 +232,19 @@ contract SmartFundRegistry is Ownable {
   * @param _tokenAddress    Address of the token to be withdrawn
   */
   function withdrawTokens(address _tokenAddress) external onlyOwner {
-    ERC20 token = ERC20(_tokenAddress);
+    IERC20 token = IERC20(_tokenAddress);
 
-    token.transfer(owner, token.balanceOf(this));
+    token.transfer(owner(), token.balanceOf(address(this)));
   }
 
   /**
   * @dev Allows platform to withdraw ether received as part of the platform fee
   */
   function withdrawEther() external onlyOwner {
-    owner.transfer(address(this).balance);
+    payable(owner()).transfer(address(this).balance);
   }
 
   // Fallback payable function in order to receive ether when fund manager withdraws their cut
-  function() public payable {}
+  fallback() external payable {}
 
 }

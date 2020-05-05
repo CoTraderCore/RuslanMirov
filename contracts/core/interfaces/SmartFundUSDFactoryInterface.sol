@@ -1,7 +1,7 @@
-contract SmartFundUSDFactoryInterface {
+interface SmartFundUSDFactoryInterface {
   function createSmartFund(
     address _owner,
-    string  _name,
+    string  calldata _name,
     uint256 _successFee,
     uint256 _platformFee,
     address _platfromAddress,
@@ -14,6 +14,6 @@ contract SmartFundUSDFactoryInterface {
     address _cEther,
     address _permittedConvertsAddress
     )
-  public
+  external
   returns(address);
 }

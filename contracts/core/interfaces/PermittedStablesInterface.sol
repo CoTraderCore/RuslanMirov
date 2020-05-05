@@ -1,3 +1,3 @@
-contract PermittedStablesInterface {
-  mapping (address => bool) public permittedAddresses;
+interface PermittedStablesInterface {
+  function permittedAddresses(address _address) external view returns(bool);
 }
