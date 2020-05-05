@@ -1,9 +1,4 @@
-pragma solidity ^0.4.24;
-
-contract UniswapFactoryInterface {
-    // Public Variables
-    address public exchangeTemplate;
-    uint256 public tokenCount;
+interface UniswapFactoryInterface {
     // Create Exchange
     function createExchange(address token) external returns (address exchange);
     // Get Exchange and Token Info

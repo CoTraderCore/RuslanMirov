@@ -1,11 +1,11 @@
 interface ITokensTypeStorage {
-  mapping(address => bool) public isRegistred;
+  function isRegistred(address _address) external view returns(bool);
 
-  mapping(address => bytes32) public getType;
+  function getType(address _address) external view returns(bytes32);
 
-  mapping(address => bool) public isPermittedAddress;
+  function isPermittedAddress(address _address) external view returns(bool);
 
-  address public owner;
+  function owner() external view returns(address);
 
   function addNewTokenType(address _token, string calldata _type) external;
 

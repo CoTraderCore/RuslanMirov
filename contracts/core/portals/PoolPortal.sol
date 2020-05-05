@@ -90,7 +90,7 @@ contract PoolPortal {
     }
     else if (_type == uint(PortalType.Uniswap)){
       require(_amount == msg.value, "Not enough ETH");
-      buyUniswapPool(_poolToken, _amount);
+      buyUniswapPool(address(_poolToken), _amount);
     }
     else{
       // unknown portal type
@@ -142,7 +142,7 @@ contract PoolPortal {
     if(ercRemains > 0)
         ercConnector.transfer(msg.sender, ercRemains);
 
-    setTokenType(_poolToken, "BANCOR POOL");
+    setTokenType(address(_poolToken), "BANCOR POOL");
   }
 
 
@@ -255,8 +255,8 @@ contract PoolPortal {
     (IERC20 bancorConnector,
     IERC20 ercConnector) = getBancorConnectorsByRelay(address(_poolToken));
     // transfer connectors back to fund
-    bancorConnector.transfer(msg.sender, bancorConnector.balanceOf(this));
-    ercConnector.transfer(msg.sender, ercConnector.balanceOf(this));
+    bancorConnector.transfer(msg.sender, bancorConnector.balanceOf(address(this)));
+    ercConnector.transfer(msg.sender, ercConnector.balanceOf(address(this)));
   }
 
 
@@ -267,12 +267,12 @@ contract PoolPortal {
   * @param _amount           amount of uniswap pool
   */
   function sellPoolViaUniswap(IERC20 _poolToken, uint256 _amount) private {
-    address tokenAddress = uniswapFactory.getToken(_poolToken);
+    address tokenAddress = uniswapFactory.getToken(address(_poolToken));
     // check if such a pool exist
     if(tokenAddress != address(0x0000000000000000000000000000000000000000)){
-      UniswapExchangeInterface exchange = UniswapExchangeInterface(_poolToken);
+      UniswapExchangeInterface exchange = UniswapExchangeInterface(address(_poolToken));
       // approve pool token
-      _transferFromSenderAndApproveTo(IERC20(_poolToken), _amount, _poolToken);
+      _transferFromSenderAndApproveTo(IERC20(_poolToken), _amount, address(_poolToken));
       // get min returns
       (uint256 minEthAmount,
         uint256 minErcAmount) = getUniswapConnectorsAmountByPoolAmount(
@@ -384,7 +384,7 @@ contract PoolPortal {
   {
     // get converter contract
     BancorConverterInterface converter = BancorConverterInterface(
-      SmartTokenInterface(_relay).owner());
+      SmartTokenInterface(address(_relay)).owner());
     // calculate BNT and second connector amount
     // get connectors
     IERC20 bancorConnector = converter.connectorTokens(0);
