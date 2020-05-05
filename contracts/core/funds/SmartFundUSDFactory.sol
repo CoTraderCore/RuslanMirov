@@ -1,5 +1,5 @@
 // due eip-170 error we should create 2 factory one for ETH another for USD
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 
 import "./SmartFundUSD.sol";
 

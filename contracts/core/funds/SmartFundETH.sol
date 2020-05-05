@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 
 import "./SmartFundCore.sol";
 import "../interfaces/SmartFundETHInterface.sol";
@@ -25,7 +25,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
   * @param _poolPortalAddress            Address of initial pool portal
   * @param _convertPortalAddress         Address of the convert portal
   * @param _cEther                       Address of the cEther
-  * @param _permittedConvertsAddress     Address of the permitted Converts portal 
+  * @param _permittedConvertsAddress     Address of the permitted Converts portal
   */
   constructor(
     address _owner,

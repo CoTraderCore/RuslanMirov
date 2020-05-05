@@ -190,7 +190,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   }
 
   // virtual methods
-  // DAI and ETH have different implements of this methods
+  // USD and ETH based funds have different implements of this methods
   function calculateFundValue() public virtual view returns (uint256);
   function getTokenValue(IERC20 _token) public virtual view returns (uint256);
 
