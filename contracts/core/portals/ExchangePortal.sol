@@ -151,6 +151,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     bytes calldata _additionalData
   )
     external
+    override
     payable
     tokenEnabled(_destination)
     returns (uint256)
@@ -383,6 +384,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   */
   function compoundMint(uint256 _amount, address _cToken)
    external
+   override
    payable
    returns(uint256)
   {
@@ -418,6 +420,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   */
   function compoundRedeemByPercent(uint _percent, address _cToken)
    external
+   override
    returns(uint256)
   {
     uint256 receivedAmount = 0;
@@ -470,6 +473,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   */
   function getValue(address _from, address _to, uint256 _amount)
     public
+    override
     view
     returns (uint256)
   {
@@ -694,6 +698,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   */
   function getPercentFromCTokenBalance(uint _percent, address _cToken, address _holder)
    public
+   override
    view
    returns(uint256)
   {
@@ -711,7 +716,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   }
 
   // get underlying by cToken
-  function getCTokenUnderlying(address _cToken) external view returns(address){
+  function getCTokenUnderlying(address _cToken) external override view returns(address){
     return CToken(_cToken).underlying();
   }
 
@@ -744,6 +749,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     uint256[] calldata _amounts,
     address _to)
     external
+    override
     view
     returns (uint256)
   {
