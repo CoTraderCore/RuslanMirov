@@ -12,7 +12,7 @@ contract SmartFundUSDFactory {
 
   function createSmartFund(
     address _owner,
-    string  _name,
+    string memory _name,
     uint256 _successFee,
     uint256 _platformFee,
     address _exchangePortalAddress,

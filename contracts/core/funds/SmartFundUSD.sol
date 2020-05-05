@@ -10,7 +10,7 @@ import "../interfaces/PermittedStablesInterface.sol";
 */
 contract SmartFundUSD is SmartFundCore {
   using SafeMath for uint256;
-  using SafeERC20 for ERC20;
+  using SafeERC20 for IERC20;
 
   // Address of stable coin can be set in constructor and changed via function
   address public stableCoinAddress;
@@ -38,7 +38,7 @@ contract SmartFundUSD is SmartFundCore {
   */
   constructor(
     address _owner,
-    string _name,
+    string memory _name,
     uint256 _successFee,
     uint256 _platformFee,
     address _platformAddress,
@@ -91,7 +91,7 @@ contract SmartFundUSD is SmartFundCore {
     require(depositAmount > 0);
 
     // Transfer stable coin from sender
-    require(ERC20(stableCoinAddress).transferFrom(msg.sender, address(this), depositAmount));
+    require(IERC20(stableCoinAddress).transferFrom(msg.sender, address(this), depositAmount));
 
     totalWeiDeposited += depositAmount;
 
@@ -120,12 +120,13 @@ contract SmartFundUSD is SmartFundCore {
   *
   * @return The current total fund value
   */
-  function calculateFundValue() public view returns (uint256) {
+  function calculateFundValue() public override view returns (uint256) {
     // Convert ETH balance to USD
     uint256 ethBalance = exchangePortal.getValue(
-      ETH_TOKEN_ADDRESS,
+      address(ETH_TOKEN_ADDRESS),
       stableCoinAddress,
-      address(this).balance);
+      address(this).balance
+    );
 
     // If the fund only contains ether, return the funds ether balance converted in USD
     if (tokenAddresses.length == 1)
@@ -141,14 +142,14 @@ contract SmartFundUSD is SmartFundCore {
     // get all ERC20 addresses and balance
     for (uint8 i = 2; i < tokenAddresses.length; i++) {
       fromAddresses[index] = tokenAddresses[i];
-      amounts[index] = ERC20(tokenAddresses[i]).balanceOf(address(this));
+      amounts[index] = IERC20(tokenAddresses[i]).balanceOf(address(this));
       index++;
     }
     // Ask the Exchange Portal for the value of all the funds tokens in stable coin
     uint256 tokensValue = exchangePortal.getTotalValue(fromAddresses, amounts, stableCoinAddress);
 
     // Get curernt USD token balance
-    uint256 currentUSD = ERC20(stableCoinAddress).balanceOf(address(this));
+    uint256 currentUSD = IERC20(stableCoinAddress).balanceOf(address(this));
 
     // Sum ETH in USD + Current USD Token + ERC20 in USD
     return ethBalance + currentUSD + tokensValue;
@@ -162,22 +163,26 @@ contract SmartFundUSD is SmartFundCore {
   *
   * @return balance in usd
   */
-  function getTokenValue(ERC20 _token) public view returns (uint256) {
+  function getTokenValue(IERC20 _token) public override view returns (uint256) {
     // get ETH in USD
     if (_token == ETH_TOKEN_ADDRESS){
       return exchangePortal.getValue(
-        _token,
+        address(_token),
         stableCoinAddress,
         address(this).balance);
     }
     // get current USD
-    else if(_token == ERC20(stableCoinAddress)){
+    else if(_token == IERC20(stableCoinAddress)){
       return _token.balanceOf(address(this));
     }
     // get ERC20 in USD
     else{
       uint256 tokenBalance = _token.balanceOf(address(this));
-      return exchangePortal.getValue(_token, stableCoinAddress, tokenBalance);
+      return exchangePortal.getValue(
+        address(_token),
+        stableCoinAddress,
+        tokenBalance
+      );
     }
   }
 
