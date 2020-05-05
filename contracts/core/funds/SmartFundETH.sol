@@ -9,7 +9,7 @@ import "../interfaces/SmartFundETHInterface.sol";
 */
 contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
   using SafeMath for uint256;
-  using SafeERC20 for ERC20;
+  using SafeERC20 for IERC20;
 
   /**
   * @dev constructor
@@ -29,7 +29,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
   */
   constructor(
     address _owner,
-    string _name,
+    string memory _name,
     uint256 _successFee,
     uint256 _platformFee,
     address _platformAddress,
@@ -64,7 +64,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
   *
   * @return The amount of shares allocated to the depositor
   */
-  function deposit() external payable returns (uint256) {
+  function deposit() external override payable returns (uint256) {
     // Check if the sender is allowed to deposit into the fund
     if (onlyWhitelist)
       require(whitelist[msg.sender]);
@@ -98,7 +98,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
   *
   * @return The current total fund value
   */
-  function calculateFundValue() public view returns (uint256) {
+  function calculateFundValue() public override view returns (uint256) {
     uint256 ethBalance = address(this).balance;
 
     // If the fund only contains ether, return the funds ether balance
@@ -114,7 +114,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
 
     for (uint256 i = 1; i < tokenAddresses.length; i++) {
       fromAddresses[index] = tokenAddresses[i];
-      amounts[index] = ERC20(tokenAddresses[i]).balanceOf(address(this));
+      amounts[index] = IERC20(tokenAddresses[i]).balanceOf(address(this));
       index++;
     }
     // Ask the Exchange Portal for the value of all the funds tokens in eth
@@ -131,7 +131,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
   *
   * @return balance in ETH
   */
-  function getTokenValue(ERC20 _token) public view returns (uint256) {
+  function getTokenValue(IERC20 _token) public override view returns (uint256) {
     // return ETH
     if (_token == ETH_TOKEN_ADDRESS){
       return address(this).balance;
