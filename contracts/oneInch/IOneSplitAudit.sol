@@ -1,17 +1,14 @@
-pragma solidity ^0.4.24;
-
 import "../zeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
-
-contract IOneSplitAudit {
+interface IOneSplitAudit {
   function swap(
         IERC20 fromToken,
         IERC20 toToken,
         uint256 amount,
         uint256 minReturn,
-        uint256[] memory distribution,
+        uint256[] calldata distribution,
         uint256 disableFlags
-    ) public payable;
+    ) external payable;
 
   function getExpectedReturn(
         IERC20 fromToken,
@@ -20,7 +17,7 @@ contract IOneSplitAudit {
         uint256 parts,
         uint256 featureFlags // See contants in IOneSplit.sol
     )
-      public
+      external
       view
       returns(
           uint256 returnAmount,

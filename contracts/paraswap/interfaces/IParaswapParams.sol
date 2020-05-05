@@ -1,8 +1,6 @@
-pragma solidity ^0.4.24;
-
-contract IParaswapParams{
-  function getParaswapParamsFromBytes32Array(bytes32[] memory _additionalArgs)
-  public pure returns
+interface IParaswapParams{
+  function getParaswapParamsFromBytes32Array(bytes32[] calldata _additionalArgs)
+  external pure returns
   (
     uint256 minDestinationAmount,
     address[] memory callees,

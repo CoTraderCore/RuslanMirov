@@ -1,19 +1,17 @@
-pragma solidity ^0.4.24;
-
-contract ParaswapInterface{
+interface ParaswapInterface{
   function swap(
      address sourceToken,
      address destinationToken,
      uint256 sourceAmount,
      uint256 minDestinationAmount,
-     address[] memory callees,
-     bytes memory exchangeData,
-     uint256[] memory startIndexes,
-     uint256[] memory values,
-     string memory referrer,
+     address[] calldata callees,
+     bytes calldata exchangeData,
+     uint256[] calldata startIndexes,
+     uint256[] calldata values,
+     string calldata referrer,
      uint256 mintPrice
    )
-   public
+   external
    payable;
 
    function getTokenTransferProxy() external view returns (address);
