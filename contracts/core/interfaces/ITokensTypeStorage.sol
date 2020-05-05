@@ -1,4 +1,4 @@
-contract ITokensTypeStorage {
+interface ITokensTypeStorage {
   mapping(address => bool) public isRegistred;
 
   mapping(address => bytes32) public getType;
@@ -7,7 +7,7 @@ contract ITokensTypeStorage {
 
   address public owner;
 
-  function addNewTokenType(address _token, string _type) public;
+  function addNewTokenType(address _token, string calldata _type) external;
 
-  function setTokenTypeAsOwner(address _token, string _type) public;
+  function setTokenTypeAsOwner(address _token, string calldata _type) external;
 }

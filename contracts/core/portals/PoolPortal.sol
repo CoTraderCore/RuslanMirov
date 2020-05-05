@@ -443,7 +443,7 @@ contract PoolPortal {
   }
 
   // Pool portal can mark each pool token as UNISWAP or BANCOR
-  function setTokenType(address _token, string _type) private {
+  function setTokenType(address _token, string memory _type) private {
     // no need add type, if token alredy registred
     if(tokensTypes.isRegistred(_token))
       return;
