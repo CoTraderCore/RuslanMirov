@@ -257,7 +257,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
         );
       }else{
         // Just withdarw ETH
-        _withdrawAddress[k].transfer(etherPayoutAmount);
+        payable(_withdrawAddress[k]).transfer(etherPayoutAmount);
       }
     }
   }
@@ -275,7 +275,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     // try convert
     bool success;
     if(_source == address(ETH_TOKEN_ADDRESS)){
-      (success) = address(convertPortal).call.value(_amount)(
+      (bool success, bytes memory returnData) = address(convertPortal).call.value(_amount)(
       abi.encodeWithSelector(convertPortal.convert.selector,
         _source,
         _amount,
@@ -284,7 +284,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
       );
     }else{
       IERC20(_source).approve(address(convertPortal), _amount);
-      (success) = address(convertPortal).call(
+      (bool success, bytes memory returnData) = address(convertPortal).call(
       abi.encodeWithSelector(convertPortal.convert.selector,
         _source,
         _amount,
@@ -295,7 +295,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     // catch send assets without convert
     if(!success){
       if(_source == address(ETH_TOKEN_ADDRESS)){
-        _receiver.transfer(_amount);
+        payable(_receiver).transfer(_amount);
       }else{
         IERC20(_source).transfer(_receiver, _amount);
       }
@@ -388,7 +388,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
         _additionalData
       );
     } else {
-      _source.approve(exchangePortal, _sourceAmount);
+      _source.approve(address(exchangePortal), _sourceAmount);
       receivedAmount = exchangePortal.trade(
         _source,
         _sourceAmount,
@@ -401,8 +401,8 @@ abstract contract SmartFundCore is Ownable, IERC20 {
 
     require(receivedAmount >= _minReturn, "received amount can not be less than min return");
 
-    _addToken(_destination);
-    emit Trade(_source, _sourceAmount, _destination, receivedAmount);
+    _addToken(address(_destination));
+    emit Trade(address(_source), _sourceAmount, address(_destination), receivedAmount);
   }
 
 
@@ -435,7 +435,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
    }
 
    // emit event
-   emit BuyPool(_poolToken, _amount);
+   emit BuyPool(address(_poolToken), _amount);
   }
 
   // Helper for buy Uniswap pool
@@ -447,7 +447,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   private
   {
     // approve connector
-    IERC20 token = IERC20(poolPortal.getTokenByUniswapExchange(_poolToken));
+    IERC20 token = IERC20(poolPortal.getTokenByUniswapExchange(address(_poolToken)));
     token.approve(address(poolPortal), token.balanceOf(address(this)));
 
     // buy pool via ETH amount payable
@@ -514,13 +514,13 @@ abstract contract SmartFundCore is Ownable, IERC20 {
 
     // add to fund pool connectors
     if(_type == uint(PortalType.Bancor))
-     _addBancorResereve(_poolToken);
+     _addBancorResereve(address(_poolToken));
 
     if(_type == uint(PortalType.Uniswap))
-     _addUniswapReserve(_poolToken);
+     _addUniswapReserve(address(_poolToken));
 
     // event
-    emit SellPool(_poolToken, _amount);
+    emit SellPool(address(_poolToken), _amount);
   }
 
   // Helper for exctract Bancor pool connectos and add this connectors to fund

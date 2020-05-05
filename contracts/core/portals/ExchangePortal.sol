@@ -65,7 +65,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   enum ExchangeType { Paraswap, Bancor, OneInch }
 
   // This contract recognizes ETH by this address
-  ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+  IERC20 constant private ETH_TOKEN_ADDRESS = IERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
   // Trade event
   event Trade(
@@ -81,7 +81,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   mapping (address => bool) disabledTokens;
 
   // Modifier to check that trading this token is not disabled
-  modifier tokenEnabled(ERC20 _token) {
+  modifier tokenEnabled(IERC20 _token) {
     require(!disabledTokens[address(_token)]);
     _;
   }
@@ -144,9 +144,9 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @return The amount of _destination received from the trade
   */
   function trade(
-    ERC20 _source,
+    IERC20 _source,
     uint256 _sourceAmount,
-    ERC20 _destination,
+    IERC20 _destination,
     uint256 _type,
     bytes32[] calldata _additionalArgs,
     bytes calldata _additionalData
@@ -245,7 +245,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     uint256[] memory values,
     uint256 mintPrice) = paraswapParams.getParaswapParamsFromBytes32Array(_additionalArgs);
 
-   if (ERC20(sourceToken) == ETH_TOKEN_ADDRESS) {
+   if (IERC20(sourceToken) == ETH_TOKEN_ADDRESS) {
      paraswapInterface.swap.value(sourceAmount)(
        sourceToken,
        destinationToken,
@@ -259,7 +259,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
        mintPrice
      );
    } else {
-     _transferFromSenderAndApproveTo(ERC20(sourceToken), sourceAmount, paraswapSpender);
+     _transferFromSenderAndApproveTo(IERC20(sourceToken), sourceAmount, paraswapSpender);
      paraswapInterface.swap(
        sourceToken,
        destinationToken,
@@ -274,7 +274,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
      );
    }
 
-   destinationReceived = tokenBalance(ERC20(destinationToken));
+   destinationReceived = tokenBalance(IERC20(destinationToken));
    setTokenType(destinationToken, "CRYPTOCURRENCY");
  }
 
@@ -294,7 +294,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       10,
       0);
 
-    if(ERC20(sourceToken) == ETH_TOKEN_ADDRESS) {
+    if(IERC20(sourceToken) == ETH_TOKEN_ADDRESS) {
       oneInch.swap.value(sourceAmount)(
         IERC20(sourceToken),
         IERC20(destinationToken),
@@ -304,7 +304,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
         0
         );
     } else {
-      _transferFromSenderAndApproveTo(ERC20(sourceToken), sourceAmount, address(oneInch));
+      _transferFromSenderAndApproveTo(IERC20(sourceToken), sourceAmount, address(oneInch));
       oneInch.swap(
         IERC20(sourceToken),
         IERC20(destinationToken),
@@ -315,7 +315,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
         );
     }
 
-    destinationReceived = tokenBalance(ERC20(destinationToken));
+    destinationReceived = tokenBalance(IERC20(destinationToken));
     setTokenType(destinationToken, "CRYPTOCURRENCY");
  }
 
@@ -339,24 +339,24 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     );
 
     // Change source and destination to Bancor ETH wrapper
-    address source = ERC20(sourceToken) == ETH_TOKEN_ADDRESS ? BancorEtherToken : sourceToken;
-    address destination = ERC20(destinationToken) == ETH_TOKEN_ADDRESS ? BancorEtherToken : destinationToken;
+    address source = IERC20(sourceToken) == ETH_TOKEN_ADDRESS ? BancorEtherToken : sourceToken;
+    address destination = IERC20(destinationToken) == ETH_TOKEN_ADDRESS ? BancorEtherToken : destinationToken;
 
     // Get Bancor tokens path
     address[] memory path = pathFinder.generatePath(source, destination);
 
     // Convert addresses to ERC20
-    ERC20[] memory pathInERC20 = new ERC20[](path.length);
+    IERC20[] memory pathInERC20 = new IERC20[](path.length);
     for(uint i=0; i<path.length; i++){
-        pathInERC20[i] = ERC20(path[i]);
+        pathInERC20[i] = IERC20(path[i]);
     }
 
     // trade
-    if (ERC20(sourceToken) == ETH_TOKEN_ADDRESS) {
+    if (IERC20(sourceToken) == ETH_TOKEN_ADDRESS) {
       returnAmount = bancorNetwork.convert.value(sourceAmount)(pathInERC20, sourceAmount, 1);
     }
     else {
-      _transferFromSenderAndApproveTo(ERC20(sourceToken), sourceAmount, address(bancorNetwork));
+      _transferFromSenderAndApproveTo(IERC20(sourceToken), sourceAmount, address(bancorNetwork));
       returnAmount = bancorNetwork.claimAndConvert(pathInERC20, sourceAmount, 1);
     }
  }
@@ -369,7 +369,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _sourceAmount    The amount to transfer and approve (in _source token)
   * @param _to              Address to approve to
   */
-  function _transferFromSenderAndApproveTo(ERC20 _source, uint256 _sourceAmount, address _to) private {
+  function _transferFromSenderAndApproveTo(IERC20 _source, uint256 _sourceAmount, address _to) private {
     require(_source.transferFrom(msg.sender, address(this), _sourceAmount));
 
     _source.approve(_to, _sourceAmount);
@@ -398,7 +398,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       // mint cERC20
       CToken cToken = CToken(_cToken);
       address underlyingAddress = cToken.underlying();
-      _transferFromSenderAndApproveTo(ERC20(underlyingAddress), _amount, address(_cToken));
+      _transferFromSenderAndApproveTo(IERC20(underlyingAddress), _amount, address(_cToken));
       cToken.mint(_amount);
       // transfer received cERC back to fund
       receivedAmount = cToken.balanceOf(address(this));
@@ -426,7 +426,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     uint256 amount = getPercentFromCTokenBalanceAmount(_percent, _cToken, msg.sender);
 
     // transfer amount from sender
-    ERC20(_cToken).transferFrom(msg.sender, address(this), amount);
+    IERC20(_cToken).transferFrom(msg.sender, address(this), amount);
 
     // reedem
     if(_cToken == address(cEther)){
@@ -442,7 +442,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       cToken.redeem(amount);
       // transfer received ERC20 back to fund
       address underlyingAddress = cToken.underlying();
-      ERC20 underlying = ERC20(underlyingAddress);
+      IERC20 underlying = IERC20(underlyingAddress);
       receivedAmount = underlying.balanceOf(address(this));
       underlying.transfer(msg.sender, receivedAmount);
     }
@@ -454,7 +454,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
 
   // VIEW Functions
 
-  function tokenBalance(ERC20 _token) private view returns (uint256) {
+  function tokenBalance(IERC20 _token) private view returns (uint256) {
     if (_token == ETH_TOKEN_ADDRESS)
       return address(this).balance;
     return _token.balanceOf(address(this));
@@ -709,10 +709,10 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
    returns(uint256)
   {
     if(_percent == 100){
-      return ERC20(_cToken).balanceOf(_holder);
+      return IERC20(_cToken).balanceOf(_holder);
     }
     else if(_percent > 0 && _percent < 100){
-      uint256 currectBalance = ERC20(_cToken).balanceOf(_holder);
+      uint256 currectBalance = IERC20(_cToken).balanceOf(_holder);
       return currectBalance.div(100).mul(_percent);
     }
     else{

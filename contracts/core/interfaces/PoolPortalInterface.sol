@@ -27,7 +27,7 @@ interface PoolPortalInterface {
   function getBancorConnectorsAmountByRelayAmount
   (
     uint256 _amount,
-    ERC20 _relay
+    IERC20 _relay
   )
   external view returns(uint256 bancorAmount, uint256 connectorAmount);
 
