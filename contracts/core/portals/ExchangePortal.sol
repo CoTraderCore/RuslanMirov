@@ -423,7 +423,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   {
     uint256 receivedAmount = 0;
 
-    uint256 amount = getPercentFromCTokenBalanceAmount(_percent, _cToken, msg.sender);
+    uint256 amount = getPercentFromCTokenBalance(_percent, _cToken, msg.sender);
 
     // transfer amount from sender
     IERC20(_cToken).transferFrom(msg.sender, address(this), amount);
@@ -469,8 +469,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   *
   * @return best price from Paraswap or 1inch for ERC20, or ratio for Uniswap and Bancor pools
   */
-  function getValueIn(address _from, address _to, uint256 _amount)
-    private
+  function getValue(address _from, address _to, uint256 _amount)
+    public
     view
     returns (uint256)
   {
@@ -500,16 +500,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     else{
       return 0;
     }
-  }
-
-  // external call for getValue
-
-  function getValue(address _from, address _to, uint256 _amount)
-    external
-    view
-    returns (uint256)
-  {
-    return getValueIn(_from, _to, _amount);
   }
 
   /**
@@ -703,8 +693,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   * @param _cToken        cToken address
   * @param _holder        address of cToken holder
   */
-  function getPercentFromCTokenBalanceAmount(uint _percent, address _cToken, address _holder)
-   private
+  function getPercentFromCTokenBalance(uint _percent, address _cToken, address _holder)
+   public
    view
    returns(uint256)
   {
@@ -719,15 +709,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       // not correct percent
       return 0;
     }
-  }
-
-  // external call for getPercentFromCTokenBalanceAmount
-  function getPercentFromCTokenBalance(uint _percent, address _cToken, address _holder)
-   external
-   view
-   returns(uint256)
-  {
-   return getPercentFromCTokenBalanceAmount(_percent, cToken, _holder);
   }
 
   // get underlying by cToken
@@ -769,7 +750,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   {
     uint256 sum = 0;
     for (uint256 i = 0; i < _fromAddresses.length; i++) {
-      sum = sum.add(getValueIn(_fromAddresses[i], _to, _amounts[i]));
+      sum = sum.add(getValue(_fromAddresses[i], _to, _amounts[i]));
     }
     return sum;
   }
