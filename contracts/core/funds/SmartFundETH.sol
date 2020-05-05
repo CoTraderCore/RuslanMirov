@@ -1,13 +1,12 @@
 pragma solidity ^0.6.0;
 
 import "./SmartFundCore.sol";
-import "../interfaces/SmartFundETHInterface.sol";
 
 /*
   Note: this smart fund inherits SmartFundCore and make core operations like deposit,
   calculate fund value etc in ETH
 */
-contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
+contract SmartFundETH is SmartFundCore {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
@@ -64,7 +63,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
   *
   * @return The amount of shares allocated to the depositor
   */
-  function deposit() external override payable returns (uint256) {
+  function deposit() external payable returns (uint256) {
     // Check if the sender is allowed to deposit into the fund
     if (onlyWhitelist)
       require(whitelist[msg.sender]);
@@ -118,7 +117,11 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
       index++;
     }
     // Ask the Exchange Portal for the value of all the funds tokens in eth
-    uint256 tokensValue = exchangePortal.getTotalValue(fromAddresses, amounts, ETH_TOKEN_ADDRESS);
+    uint256 tokensValue = exchangePortal.getTotalValue(
+      fromAddresses,
+      amounts,
+      address(ETH_TOKEN_ADDRESS)
+    );
 
     // Sum ETH + ERC20
     return ethBalance + tokensValue;
@@ -139,7 +142,11 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
     // return ERC20 in ETH
     else{
       uint256 tokenBalance = _token.balanceOf(address(this));
-      return exchangePortal.getValue(_token, ETH_TOKEN_ADDRESS, tokenBalance);
+      return exchangePortal.getValue(
+        address(_token),
+        address(ETH_TOKEN_ADDRESS),
+        tokenBalance
+      );
     }
   }
 }

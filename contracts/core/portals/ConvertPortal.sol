@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 /**
 * This contract convert source ERC20 token to destanation token
 * support sources 1INCH, COMPOUND, BANCOR/UNISWAP pools

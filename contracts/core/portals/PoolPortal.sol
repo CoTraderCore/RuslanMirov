@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 
 /*
 * This contract allow buy/sell pool for Bancor and Uniswap assets

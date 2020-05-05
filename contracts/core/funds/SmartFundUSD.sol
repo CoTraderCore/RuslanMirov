@@ -1,7 +1,6 @@
 pragma solidity ^0.6.0;
 
 import "./SmartFundCore.sol";
-import "../interfaces/SmartFundUSDInterface.sol";
 import "../interfaces/PermittedStablesInterface.sol";
 
 
@@ -9,7 +8,7 @@ import "../interfaces/PermittedStablesInterface.sol";
   Note: this smart fund smart fund inherits SmartFundCore and make core operations like deposit,
   calculate fund value etc in USD
 */
-contract SmartFundUSD is SmartFundUSDInterface, SmartFundCore {
+contract SmartFundUSD is SmartFundCore {
   using SafeMath for uint256;
   using SafeERC20 for ERC20;
 
