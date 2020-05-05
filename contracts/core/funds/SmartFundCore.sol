@@ -561,7 +561,8 @@ abstract contract SmartFundCore is Ownable, IERC20 {
       return;
 
     tokensTraded[_token] = true;
-    uint256 tokenCount = tokenAddresses.push(_token);
+    tokenAddresses.push(_token);
+    uint256 tokenCount = tokenAddresses.length;
 
     // we can't hold more than MAX_TOKENS tokens
     require(tokenCount <= MAX_TOKENS);
@@ -586,7 +587,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     uint256 arrayLength = tokenAddresses.length - 1;
     tokenAddresses[_tokenIndex] = tokenAddresses[arrayLength];
     delete tokenAddresses[arrayLength];
-    tokenAddresses.length--;
+    tokenAddresses.pop();
   }
 
   /**
