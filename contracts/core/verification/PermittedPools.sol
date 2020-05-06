@@ -1,6 +1,6 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 
-import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../../zeppelin-solidity/contracts/access/Ownable.sol";
 
 /*
   The PermittedPools contract determines which addresses are permitted

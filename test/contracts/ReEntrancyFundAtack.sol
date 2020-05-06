@@ -1,4 +1,4 @@
-import "../../contracts/core/interfaces/SmartFundETHInterface.sol";
+import "../../contracts/core/funds/SmartFundETH.sol";
 
 
 contract ReEntrancyFundAtack {

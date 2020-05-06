@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 
 /**
 * Logic: Permitetd addresses can write to this contract types of converted tokens
@@ -9,7 +9,7 @@ pragma solidity ^0.4.24;
 * so we mark type for new token once after success convert
 */
 
-import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../../zeppelin-solidity/contracts/access/Ownable.sol";
 
 contract TokensTypeStorage is Ownable {
   // check if token alredy registred
@@ -28,7 +28,7 @@ contract TokensTypeStorage is Ownable {
   }
 
   // allow add new token type from trade portals
-  function addNewTokenType(address _token, string _type) public onlyPermitted {
+  function addNewTokenType(address _token, string calldata _type) external onlyPermitted {
     // Don't add if alredy registred
     if(isRegistred[_token])
       return;
@@ -41,7 +41,7 @@ contract TokensTypeStorage is Ownable {
 
 
   // allow update token type from owner wallet
-  function setTokenTypeAsOwner(address _token, string _type) public onlyOwner{
+  function setTokenTypeAsOwner(address _token, string calldata _type) external onlyOwner{
     // get previos type
     bytes32 prevType = getType[_token];
 

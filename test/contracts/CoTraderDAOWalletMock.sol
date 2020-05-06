@@ -1,6 +1,6 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 
 contract CoTraderDAOWalletMock {
   // fallback payable function to receive ether from other contract addresses
-  function() public payable {}
+  fallback() public payable {}
 }
