@@ -171,8 +171,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     if (_type == uint(ExchangeType.Paraswap)) {
       // call paraswap
       receivedAmount = _tradeViaParaswap(
-          _source,
-          _destination,
+          address(_source),
+          address(_destination),
           _sourceAmount,
           _additionalData,
           _additionalArgs
@@ -181,16 +181,16 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     // SHOULD TRADE BANCOR HERE
     else if (_type == uint(ExchangeType.Bancor)){
       receivedAmount = _tradeViaBancorNewtork(
-          _source,
-          _destination,
+          address(_source),
+          address(_destination),
           _sourceAmount
       );
     }
     // SHOULD TRADE 1INCH HERE
     else if (_type == uint(ExchangeType.OneInch)){
       receivedAmount = _tradeViaOneInch(
-          _source,
-          _destination,
+          address(_source),
+          address(_destination),
           _sourceAmount
       );
     }
@@ -222,7 +222,14 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       }
     }
 
-    emit Trade(msg.sender, _source, _sourceAmount, _destination, receivedAmount, uint8(_type));
+    emit Trade(
+      msg.sender,
+      address(_source),
+      _sourceAmount,
+      address(_destination),
+      receivedAmount,
+      uint8(_type)
+    );
 
     return receivedAmount;
   }
@@ -552,12 +559,10 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   )
   public view returns (uint256 value) {
     // Check call Paraswap (Because Paraswap can return error for some not supported  assets)
-    (bool success) = address(priceFeedInterface).call(
-    abi.encodeWithSelector(priceFeedInterface.getBestPriceSimple.selector, _from, _to, _amount));
-    // if Paraswap can get rate for this assets, use Paraswap
-    if(success){
-      value = priceFeedInterface.getBestPriceSimple(_from, _to, _amount);
-    }else{
+    try priceFeedInterface.getBestPriceSimple(_from, _to, _amount) returns (uint256 result)
+    {
+      value = result;
+    }catch{
       value = 0;
     }
   }
@@ -567,22 +572,24 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _from,
     address _to,
     uint256 _amount
-  ) public view returns (uint256 value) {
-    // Check call 1inch
-    (bool success) = address(oneInch).call(
-    abi.encodeWithSelector(oneInch.getExpectedReturn.selector, IERC20(_from), IERC20(_to), _amount));
-    // if 1inch can get rate for this assets, use 1inch
-    if(success){
-      (uint256 returnAmount, ) = oneInch.getExpectedReturn(
-        IERC20(_from),
-        IERC20(_to),
-        _amount,
-        10,
-        0);
-      value = returnAmount;
-    }else{
-      value = 0;
-    }
+  )
+    public
+    view
+    returns (uint256 value)
+  {
+    try oneInch.getExpectedReturn(
+       IERC20(_from),
+       IERC20(_to),
+       _amount,
+       10,
+       0)
+      returns(uint256 returnAmount, uint256[] memory distribution)
+     {
+       value = returnAmount;
+     }
+     catch{
+       value = 0;
+     }
   }
 
   // helper for get ratio between assets in Bancor network
@@ -591,17 +598,13 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _to,
     uint256 _amount
   )
-  public
-  view
-  returns (uint256 value)
+    public
+    view
+    returns (uint256 value)
   {
-    // Check call Bancor (Because Bancor can return error for some not supported assets)
-    (bool success) = address(poolPortal).call(
-    abi.encodeWithSelector(poolPortal.getBancorRatio.selector, _from, _to, _amount));
-    // if Bancor can get rate for this assets use Bancor
-    if(success){
-      value = poolPortal.getBancorRatio(_from, _to, _amount);
-    }else{
+    try poolPortal.getBancorRatio(_from, _to, _amount) returns(uint256 result){
+      value = result;
+    }catch{
       value = 0;
     }
   }
@@ -623,7 +626,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     if(underlyingAmount > 0){
       // get underlying address
       address underlyingAddress = (_from == address(cEther))
-      ? ETH_TOKEN_ADDRESS
+      ? address(ETH_TOKEN_ADDRESS)
       : CToken(_from).underlying();
       // get rate for underlying address via paraswap
       return getValueViaParaswap(underlyingAddress, _to, underlyingAmount);
@@ -640,18 +643,15 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     uint256 _amount
   )
     public
-    view returns (uint256)
+    view
+    returns (uint256)
   {
-    // Check call
-    (bool success) = address(_from).call(
-    abi.encodeWithSelector(CToken(_from).exchangeRateCurrent.selector));
-
-    if(success){
-      // get underlying amount by cToken amount
-      uint256 rate = CToken(_from).exchangeRateCurrent();
+    try CToken(_from).exchangeRateCurrent() returns(uint256 rate)
+    {
       uint256 underlyingAmount = _amount.mul(rate).div(1e18);
       return underlyingAmount;
-    }else{
+    }
+    catch{
       return 0;
     }
   }
@@ -675,7 +675,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     );
     // get ERC amount in ETH
     address token = poolPortal.getTokenByUniswapExchange(_from);
-    uint256 ercAmountInETH = getValueViaParaswap(token, ETH_TOKEN_ADDRESS, ercAmount);
+    uint256 ercAmountInETH = getValueViaParaswap(token, address(ETH_TOKEN_ADDRESS), ercAmount);
     // sum ETH with ERC amount in ETH
     uint256 totalETH = ethAmount.add(ercAmountInETH);
 
@@ -685,7 +685,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
     // convert ETH into _to asset via Paraswap
     else{
-      return getValueViaParaswap(ETH_TOKEN_ADDRESS, _to, totalETH);
+      return getValueViaParaswap(address(ETH_TOKEN_ADDRESS), _to, totalETH);
     }
   }
 
