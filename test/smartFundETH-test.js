@@ -882,7 +882,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await cToken.balanceOf(smartFundETH.address), 0)
     })
 
-
     it('Compound assets works correct with ERC20 assests', async function() {
       assert.equal(await cEther.balanceOf(smartFundETH.address), 0)
       // give exchange portal contract some money
@@ -935,7 +934,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // investor get cToken
       assert.equal(await cEther.balanceOf(userOne), toWei(String(1)))
     })
-
 
     it('Calculate fund value and withdraw with Compound assests', async function() {
       // send some DAI to exchnage portal
@@ -1015,7 +1013,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.compoundRedeemByPercent(100, cEther.address)
       assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(1)))
     })
-
 
     it('manager can redeemUnderlying different percent', async function() {
       // deposit in fund

@@ -13,9 +13,7 @@ contract CEther is Token{
 
   function mint() external payable {
     require(msg.value > 0, 'You need provide ETH for mint cETH');
-    // transfer cETHer
-    // for mock 1 ETH = 1 cETH
-    ERC20(address(this)).transfer(msg.sender, msg.value);
+    balances[msg.sender] = balances[msg.sender].add(msg.value);
   }
 
   function redeem(uint redeemTokens) external returns (uint){

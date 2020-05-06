@@ -16,10 +16,7 @@ contract CToken is Token {
   function mint(uint mintAmount) external returns (uint) {
     require(ERC20(underlying).transferFrom(msg.sender, address(this), mintAmount),
     "NOT Provide ERC20 for mint cToken");
-    // transfer cToken
-    // for mock 1 cToken = 1 erc token
-    ERC20(address(this)).transfer(msg.sender, mintAmount);
-
+    balances[msg.sender] = balances[msg.sender].add(mintAmount);
     return mintAmount;
   }
 
