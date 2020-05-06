@@ -1,4 +1,5 @@
 pragma solidity ^0.6.0;
+
 /**
 * This contract convert source ERC20 token to destanation token
 * support sources 1INCH, COMPOUND, BANCOR/UNISWAP pools
@@ -8,7 +9,7 @@ import "../interfaces/ExchangePortalInterface.sol";
 import "../interfaces/PoolPortalInterface.sol";
 import "../interfaces/ITokensTypeStorage.sol";
 import "../../compound/CToken.sol";
-import "../../zeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
+
 
 contract ConvertPortal {
   address constant private ETH_TOKEN_ADDRESS = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
@@ -76,23 +77,23 @@ contract ConvertPortal {
 
     // send assets to _receiver
     if (_destination == ETH_TOKEN_ADDRESS) {
-      (_receiver).transfer(receivedAmount);
+      payable(_receiver).transfer(receivedAmount);
     } else {
       // transfer tokens received to sender
-      ERC20(_destination).transfer(_receiver, receivedAmount);
+      IERC20(_destination).transfer(_receiver, receivedAmount);
     }
 
     // After the trade, any _source that exchangePortal holds will be sent back to msg.sender
     uint256 endAmount = (_source == ETH_TOKEN_ADDRESS)
     ? address(this).balance
-    : ERC20(_source).balanceOf(address(this));
+    : IERC20(_source).balanceOf(address(this));
 
     // Check if we hold a positive amount of _source
     if (endAmount > 0) {
       if (_source == ETH_TOKEN_ADDRESS) {
-        (_receiver).transfer(endAmount);
+        payable(_receiver).transfer(endAmount);
       } else {
-        ERC20(_source).transfer(_receiver, endAmount);
+        IERC20(_source).transfer(_receiver, endAmount);
       }
     }
   }
@@ -104,7 +105,7 @@ contract ConvertPortal {
     returns(uint256)
   {
     // step 0 transfer compound asset from sender
-    ERC20(_source).transferFrom(msg.sender, address(this), _sourceAmount);
+    IERC20(_source).transferFrom(msg.sender, address(this), _sourceAmount);
 
     // step 1 convert cToken to underlying
     CToken(_source).redeem(_sourceAmount);
@@ -116,7 +117,7 @@ contract ConvertPortal {
 
     uint256 underlyingAmount = (_source == CEther)
     ? address(this).balance
-    : ERC20(underlyingAddress).balanceOf(address(this));
+    : IERC20(underlyingAddress).balanceOf(address(this));
 
     // step 3 convert underlying to destination if _destination != underlyingAddress
     if(_destination != underlyingAddress){
@@ -125,9 +126,9 @@ contract ConvertPortal {
       // Convert ETH
       if(underlyingAddress == ETH_TOKEN_ADDRESS){
         destAmount = exchangePortal.trade.value(underlyingAmount)(
-          ERC20(underlyingAddress),
+          IERC20(underlyingAddress),
           underlyingAmount,
-          ERC20(_destination),
+          IERC20(_destination),
           2,
           BYTES32_EMPTY_ARRAY,
           "0x"
@@ -135,11 +136,11 @@ contract ConvertPortal {
       }
       // Convert ERC20
       else{
-        ERC20(underlyingAddress).approve(address(exchangePortal), underlyingAmount);
+        IERC20(underlyingAddress).approve(address(exchangePortal), underlyingAmount);
         destAmount = exchangePortal.trade(
-          ERC20(underlyingAddress),
+          IERC20(underlyingAddress),
           underlyingAmount,
-          ERC20(_destination),
+          IERC20(_destination),
           2,
           BYTES32_EMPTY_ARRAY,
           "0x"
@@ -160,26 +161,26 @@ contract ConvertPortal {
     returns(uint256)
   {
     // sell pool
-    _transferFromSenderAndApproveTo(ERC20(_source), _sourceAmount, address(poolPortal));
+    _transferFromSenderAndApproveTo(IERC20(_source), _sourceAmount, address(poolPortal));
 
     poolPortal.sellPool(
       _sourceAmount,
       1, // type Uniswap
-      ERC20(_source)
+      IERC20(_source)
     );
 
     // convert pool connectors to destanation
     // get erc20 connector address
     address ERCConnector = poolPortal.getTokenByUniswapExchange(_source);
-    uint256 ERCAmount = ERC20(ERCConnector).balanceOf(address(this));
+    uint256 ERCAmount = IERC20(ERCConnector).balanceOf(address(this));
 
     // convert ERC20 connector via 1inch if destination != ERC20 connector
     if(ERCConnector != _destination){
-      ERC20(ERCConnector).approve(address(exchangePortal), ERCAmount);
+      IERC20(ERCConnector).approve(address(exchangePortal), ERCAmount);
       exchangePortal.trade(
-        ERC20(ERCConnector),
+        IERC20(ERCConnector),
         ERCAmount,
-        ERC20(_destination),
+        IERC20(_destination),
         2, // type 1inch
         BYTES32_EMPTY_ARRAY,
         "0x"
@@ -190,9 +191,9 @@ contract ConvertPortal {
     if(_destination != ETH_TOKEN_ADDRESS){
       uint256 ETHAmount = address(this).balance;
       exchangePortal.trade.value(ETHAmount)(
-        ERC20(ETH_TOKEN_ADDRESS),
+        IERC20(ETH_TOKEN_ADDRESS),
         ETHAmount,
-        ERC20(_destination),
+        IERC20(_destination),
         2, // type 1inch
         BYTES32_EMPTY_ARRAY,
         "0x"
@@ -203,7 +204,7 @@ contract ConvertPortal {
     if(_destination == ETH_TOKEN_ADDRESS){
       return address(this).balance;
     }else{
-      return ERC20(_destination).balanceOf(address(this));
+      return IERC20(_destination).balanceOf(address(this));
     }
   }
 
@@ -216,19 +217,19 @@ contract ConvertPortal {
     uint256 destAmount = 0;
     if(_source == ETH_TOKEN_ADDRESS){
       destAmount = exchangePortal.trade.value(_sourceAmount)(
-        ERC20(_source),
+        IERC20(_source),
         _sourceAmount,
-        ERC20(_destination),
+        IERC20(_destination),
         2,
         BYTES32_EMPTY_ARRAY,
         "0x"
       );
     }else{
-      _transferFromSenderAndApproveTo(ERC20(_source), _sourceAmount, address(exchangePortal));
+      _transferFromSenderAndApproveTo(IERC20(_source), _sourceAmount, address(exchangePortal));
       destAmount = exchangePortal.trade(
-        ERC20(_source),
+        IERC20(_source),
         _sourceAmount,
-        ERC20(_destination),
+        IERC20(_destination),
         2,
         BYTES32_EMPTY_ARRAY,
         "0x"
@@ -243,12 +244,12 @@ contract ConvertPortal {
     private
     returns(uint256)
   {
-    _transferFromSenderAndApproveTo(ERC20(_source), _sourceAmount, address(exchangePortal));
+    _transferFromSenderAndApproveTo(IERC20(_source), _sourceAmount, address(exchangePortal));
     // Convert BNT pools just via Bancor DEX
     uint256 destAmount = exchangePortal.trade(
-      ERC20(_source),
+      IERC20(_source),
       _sourceAmount,
-      ERC20(_destination),
+      IERC20(_destination),
       1,
       BYTES32_EMPTY_ARRAY,
       "0x"
@@ -264,12 +265,12 @@ contract ConvertPortal {
   * @param _sourceAmount    The amount to transfer and approve (in _source token)
   * @param _to              Address to approve to
   */
-  function _transferFromSenderAndApproveTo(ERC20 _source, uint256 _sourceAmount, address _to) private {
+  function _transferFromSenderAndApproveTo(IERC20 _source, uint256 _sourceAmount, address _to) private {
     require(_source.transferFrom(msg.sender, address(this), _sourceAmount), "Can not transfer from");
 
     _source.approve(_to, _sourceAmount);
   }
 
   // fallback payable function to receive ether from other contract addresses
-  function() public payable {}
+  fallback() external payable {}
 }
