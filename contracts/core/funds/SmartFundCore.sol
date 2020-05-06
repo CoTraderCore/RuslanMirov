@@ -271,35 +271,31 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   )
     private
   {
-    // this is an analogue of try catch for version 4.24
-    // try convert
-    bool success;
     if(_source == address(ETH_TOKEN_ADDRESS)){
-      (bool success, bytes memory returnData) = address(convertPortal).call.value(_amount)(
-      abi.encodeWithSelector(convertPortal.convert.selector,
+      try convertPortal.convert.value(_amount)(
         _source,
         _amount,
         _destanation,
         _receiver)
-      );
-    }else{
-      IERC20(_source).approve(address(convertPortal), _amount);
-      (bool success, bytes memory returnData) = address(convertPortal).call(
-      abi.encodeWithSelector(convertPortal.convert.selector,
-        _source,
-        _amount,
-        _destanation,
-        _receiver)
-      );
-    }
-    // catch send assets without convert
-    if(!success){
-      if(_source == address(ETH_TOKEN_ADDRESS)){
+       {}
+       catch{
+        // if can't convert send ETH without convert
         payable(_receiver).transfer(_amount);
-      }else{
+       }
+    }
+    else{
+      IERC20(_source).approve(address(convertPortal), _amount);
+      try convertPortal.convert(
+        _source,
+        _amount,
+        _destanation,
+        _receiver)
+      {}
+      catch{
+        // if can't convert send ERC20 without convert
         IERC20(_source).transfer(_receiver, _amount);
       }
-   }
+    }
  }
 
   /**
