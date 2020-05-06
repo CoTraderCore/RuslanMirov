@@ -1,7 +1,6 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 
-import "../../../contracts/zeppelin-solidity/contracts/math/SafeMath.sol";
-import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "../../../contracts/core/interfaces/ITokensTypeStorage.sol";
 
 import "../compoundMock/CEther.sol";
@@ -13,7 +12,7 @@ contract ExchangePortalMock {
   ITokensTypeStorage public tokensTypes;
 
   // This contract recognizes ETH by this address, airswap recognizes ETH as address(0x0)
-  ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
+  IERC20 constant private ETH_TOKEN_ADDRESS = IERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
   address constant private NULL_ADDRESS = address(0);
   // multiplyer and divider are used to set prices. X ether = X*(mul/div) token,
   // similarly X token = X*(div/mul) ether for every token where X is the amount
@@ -46,12 +45,12 @@ contract ExchangePortalMock {
   }
 
   function trade(
-    ERC20 _source,
+    IERC20 _source,
     uint256 _sourceAmount,
-    ERC20 _destination,
+    IERC20 _destination,
     uint256 _type,
-    bytes32[] _additionalArgs,
-    bytes _additionalData
+    bytes32[] calldata _additionalArgs,
+    bytes calldata _additionalData
   ) external payable returns (uint256) {
     require(_source != _destination);
 
@@ -89,7 +88,7 @@ contract ExchangePortalMock {
     }
 
 
-    emit Trade(msg.sender, _source, _sourceAmount, _destination, receivedAmount, uint8(_type));
+    emit Trade(msg.sender, address(_source), _sourceAmount, address(_destination), receivedAmount, uint8(_type));
 
     return receivedAmount;
   }
@@ -97,7 +96,7 @@ contract ExchangePortalMock {
   // Mock for trade via Bancor, Paraswap, OneInch
   // This DEXs has the same logic
   // Transfer asset A from fund and send asset B back to fund
-  function _trade(ERC20 _source, ERC20 _destination, uint256 _sourceAmount)
+  function _trade(IERC20 _source, IERC20 _destination, uint256 _sourceAmount)
    private
    returns(uint256 receivedAmount)
   {
@@ -105,16 +104,16 @@ contract ExchangePortalMock {
     if(!stopTransfer){
       // transfer asset A from sender
       if (_source == ETH_TOKEN_ADDRESS) {
-        receivedAmount = getValue(_source, _destination, _sourceAmount);
+        receivedAmount = getValue(address(_source), address(_destination), _sourceAmount);
       } else {
         _transferFromSenderAndApproveTo(_source, _sourceAmount, NULL_ADDRESS);
-        receivedAmount = getValue(_source, _destination, _sourceAmount);
+        receivedAmount = getValue(address(_source), address(_destination), _sourceAmount);
       }
     }else{
       receivedAmount = 0;
     }
 
-    setTokenType(_destination, "CRYPTOCURRENCY");
+    setTokenType(address(_destination), "CRYPTOCURRENCY");
   }
 
 
@@ -151,12 +150,12 @@ contract ExchangePortalMock {
 
     uint256 amount = (_percent == 100)
     // if 100 return all
-    ? ERC20(address(_cToken)).balanceOf(msg.sender)
+    ? IERC20(address(_cToken)).balanceOf(msg.sender)
     // else calculate percent
     : getPercentFromCTokenBalance(_percent, address(_cToken), msg.sender);
 
     // transfer amount from sender
-    ERC20(_cToken).transferFrom(msg.sender, address(this), amount);
+    IERC20(_cToken).transferFrom(msg.sender, address(this), amount);
 
     // reedem
     if(_cToken == address(cEther)){
@@ -167,12 +166,12 @@ contract ExchangePortalMock {
       (msg.sender).transfer(amount);
 
     }else{
-      // redeem ERC20
+      // redeem IERC20
       CToken cToken = CToken(_cToken);
       cToken.redeem(amount);
-      // transfer received ERC20 back to fund
+      // transfer received IERC20 back to fund
       address underlyingAddress = cToken.underlying();
-      ERC20 underlying = ERC20(underlyingAddress);
+      IERC20 underlying = IERC20(underlyingAddress);
       receivedAmount = amount;
       underlying.transfer(msg.sender, amount);
     }
@@ -202,7 +201,7 @@ contract ExchangePortalMock {
       // mint cERC20
       CToken cToken = CToken(_cToken);
       address underlyingAddress = cToken.underlying();
-      _transferFromSenderAndApproveTo(ERC20(underlyingAddress), _amount, address(_cToken));
+      _transferFromSenderAndApproveTo(IERC20(underlyingAddress), _amount, address(_cToken));
       cToken.mint(_amount);
 
       // transfer received cERC back to fund
@@ -229,7 +228,7 @@ contract ExchangePortalMock {
   returns(uint256)
   {
     if(_percent > 0 && _percent <= 100){
-      uint256 currectBalance = ERC20(_cToken).balanceOf(_holder);
+      uint256 currectBalance = IERC20(_cToken).balanceOf(_holder);
       return currectBalance.div(100).mul(_percent);
     }
     else{
@@ -243,7 +242,7 @@ contract ExchangePortalMock {
   }
 
   // get the total value of multiple tokens and amounts in one go
-  function getTotalValue(address[] _fromAddresses, uint256[] _amounts, address _to) public view returns (uint256) {
+  function getTotalValue(address[] memory _fromAddresses, uint256[] memory _amounts, address _to) public view returns (uint256) {
     uint256 sum = 0;
 
     for (uint256 i = 0; i < _fromAddresses.length; i++) {
@@ -259,8 +258,8 @@ contract ExchangePortalMock {
   }
 
 
-  function _transferFromSenderAndApproveTo(ERC20 _source, uint256 _sourceAmount, address _to) private {
-    require(_source.transferFrom(msg.sender, this, _sourceAmount));
+  function _transferFromSenderAndApproveTo(IERC20 _source, uint256 _sourceAmount, address _to) private {
+    require(_source.transferFrom(msg.sender, address(this), _sourceAmount));
     _source.approve(_to, _sourceAmount);
   }
 
@@ -269,7 +268,7 @@ contract ExchangePortalMock {
   }
 
 
-  function setTokenType(address _token, string _type) private {
+  function setTokenType(address _token, string memory _type) private {
     // no need add type, if token alredy registred
     if(tokensTypes.isRegistred(_token))
       return;
@@ -279,5 +278,5 @@ contract ExchangePortalMock {
 
   function pay() public payable {}
 
-  function() public payable {}
+  fallback() external payable {}
 }

@@ -1,9 +1,9 @@
 // This contract sell/buy UNI and BNT Pool relays for DAI mock token
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 
 import "../../../contracts/core/interfaces/ITokensTypeStorage.sol";
 import "../../../contracts/zeppelin-solidity/contracts/math/SafeMath.sol";
-import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
 
 contract PoolPortalMock {
@@ -20,7 +20,7 @@ contract PoolPortalMock {
   enum PortalType { Bancor, Uniswap }
 
   // KyberExchange recognizes ETH by this address, airswap recognizes ETH as address(0x0)
-  ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
+  IERC20 constant private ETH_TOKEN_ADDRESS = IERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
   address constant private NULL_ADDRESS = address(0);
 
   constructor(
@@ -41,21 +41,21 @@ contract PoolPortalMock {
 
 
   // for mock 1 Relay BNT = 0.5 BNT and 0.5 ERC
-  function buyBancorPool(ERC20 _poolToken, uint256 _amount) private {
+  function buyBancorPool(IERC20 _poolToken, uint256 _amount) private {
      uint256 relayAmount = _amount.div(2);
 
-     require(ERC20(BNT).transferFrom(msg.sender, address(this), relayAmount));
-     require(ERC20(DAI).transferFrom(msg.sender, address(this), relayAmount));
+     require(IERC20(BNT).transferFrom(msg.sender, address(this), relayAmount));
+     require(IERC20(DAI).transferFrom(msg.sender, address(this), relayAmount));
 
-     ERC20(DAIBNTPoolToken).transfer(msg.sender, _amount);
+     IERC20(DAIBNTPoolToken).transfer(msg.sender, _amount);
 
-     setTokenType(_poolToken, "BANCOR POOL");
+     setTokenType(address(_poolToken), "BANCOR POOL");
   }
 
   // for mock 1 UNI = 0.5 ETH and 0.5 ERC
   function buyUniswapPool(address _poolToken, uint256 _ethAmount) private {
-    require(ERC20(DAI).transferFrom(msg.sender, address(this), _ethAmount));
-    ERC20(DAIUNIPoolToken).transfer(msg.sender, _ethAmount.mul(2));
+    require(IERC20(DAI).transferFrom(msg.sender, address(this), _ethAmount));
+    IERC20(DAIUNIPoolToken).transfer(msg.sender, _ethAmount.mul(2));
 
     setTokenType(_poolToken, "UNISWAP POOL");
   }
@@ -65,7 +65,7 @@ contract PoolPortalMock {
   (
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken
+    IERC20 _poolToken
   )
   external
   payable
@@ -75,7 +75,7 @@ contract PoolPortalMock {
     }
     else if (_type == uint(PortalType.Uniswap)){
       require(_amount == msg.value, "Not enough ETH");
-      buyUniswapPool(_poolToken, _amount);
+      buyUniswapPool(address(_poolToken), _amount);
     }
     else{
       // unknown portal type
@@ -87,12 +87,12 @@ contract PoolPortalMock {
   public
   view
   returns(
-    ERC20 BNTConnector,
-    ERC20 ERCConnector
+    IERC20 BNTConnector,
+    IERC20 ERCConnector
   )
   {
-    BNTConnector = ERC20(BNT);
-    ERCConnector = ERC20(DAI);
+    BNTConnector = IERC20(BNT);
+    ERCConnector = IERC20(DAI);
   }
 
   function getUniswapConnectorsAmountByPoolAmount(
@@ -119,7 +119,7 @@ contract PoolPortalMock {
   (
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken
+    IERC20 _poolToken
   )
   external
   payable
@@ -137,26 +137,26 @@ contract PoolPortalMock {
   }
 
 
-  function sellPoolViaBancor(ERC20 _poolToken, uint256 _amount) private {
+  function sellPoolViaBancor(IERC20 _poolToken, uint256 _amount) private {
     // get BNT pool relay back
-    require(ERC20(DAIBNTPoolToken).transferFrom(msg.sender, address(this), _amount));
+    require(IERC20(DAIBNTPoolToken).transferFrom(msg.sender, address(this), _amount));
 
     // send back connectors
-    require(ERC20(DAI).transfer(msg.sender, _amount.div(2)));
-    require(ERC20(BNT).transfer(msg.sender, _amount.div(2)));
+    require(IERC20(DAI).transfer(msg.sender, _amount.div(2)));
+    require(IERC20(BNT).transfer(msg.sender, _amount.div(2)));
   }
 
-  function sellPoolViaUniswap(ERC20 _poolToken, uint256 _amount) private {
+  function sellPoolViaUniswap(IERC20 _poolToken, uint256 _amount) private {
     // get UNI pool back
-    require(ERC20(DAIUNIPoolToken).transferFrom(msg.sender, address(this), _amount));
+    require(IERC20(DAIUNIPoolToken).transferFrom(msg.sender, address(this), _amount));
 
     // send back connectors
-    require(ERC20(DAI).transfer(msg.sender, _amount.div(2)));
-    address(msg.sender).transfer(_amount.div(2));
+    require(IERC20(DAI).transfer(msg.sender, _amount.div(2)));
+    payable(address(msg.sender)).transfer(_amount.div(2));
   }
 
   // Pool portal can mark each pool token as UNISWAP or BANCOR
-  function setTokenType(address _token, string _type) private {
+  function setTokenType(address _token, string memory _type) private {
     // no need add type, if token alredy registred
     if(tokensTypes.isRegistred(_token))
       return;
@@ -166,5 +166,5 @@ contract PoolPortalMock {
 
   function pay() public payable {}
 
-  function() public payable {}
+  fallback() external payable {}
 }

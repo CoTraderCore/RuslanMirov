@@ -4,11 +4,11 @@ import "../../contracts/core/funds/SmartFundETH.sol";
 
 
 contract ReEntrancyFundAtack {
-    SmartFundETHInterface public fund;
+    SmartFundETH public fund;
     address public fundAddress;
 
-    constructor(address _fund)public{
-        fund = SmartFundETHInterface(_fund);
+    constructor(address payable _fund)public{
+        fund = SmartFundETH(_fund);
         fundAddress = _fund;
     }
 
@@ -26,7 +26,7 @@ contract ReEntrancyFundAtack {
     }
 
     // loop
-    function() public payable {
+    fallback() external payable {
         if(fundAddress.balance > 1 ether){
             fund.withdraw(0, false);
         }
