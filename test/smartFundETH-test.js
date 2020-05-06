@@ -600,7 +600,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     })
   })
 
-
   describe('Fund Manager', function() {
     it('should calculate fund manager and platform cut when no profits', async function() {
       await deployContracts(1500, 1000)
@@ -678,7 +677,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(fundManagerTotalCut, 20)
     })
   })
-
 
   describe('Min return', function() {
     it('Not allow execude transaction trade if for some reason DEX not sent min return asset', async function() {

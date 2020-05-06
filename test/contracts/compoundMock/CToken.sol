@@ -9,6 +9,10 @@ contract CToken is Token {
     Token(_name, _symbol, _decimals, _totalSupply)
     public
   {
+    // send all tokens from sender to this contract
+    balances[msg.sender] = 0;
+    balances[address(this)] = _totalSupply;
+    
     // Initial ERC underlying
     underlying = _underlying;
   }
