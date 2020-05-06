@@ -1,22 +1,14 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 
-import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
-import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../tokens/Token.sol";
 
-contract CToken is StandardToken, DetailedERC20 {
+contract CToken is Token {
   address public underlying;
 
-  constructor(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply, address _underlying)
-    DetailedERC20(_name, _symbol, _decimals)
+  constructor(string memory _name, string memory _symbol, uint8 _decimals, uint256 _totalSupply, address _underlying)
+    Token(_name, _symbol, _decimals, _totalSupply)
     public
   {
-    // Initialize totalSupply
-    totalSupply_ = _totalSupply;
-    // Initialize Holder
-    // This contract is owner of all cTokens
-    balances[address(this)] = _totalSupply;
-
     // Initial ERC underlying
     underlying = _underlying;
   }

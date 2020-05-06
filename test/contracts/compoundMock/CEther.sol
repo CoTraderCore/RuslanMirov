@@ -1,19 +1,14 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.6.0;
 
-import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
-import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../tokens/Token.sol";
 
-contract CEther is StandardToken, DetailedERC20 {
-  constructor(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply)
-    DetailedERC20(_name, _symbol, _decimals)
+
+contract CEther is Token{
+  constructor(string memory _name, string memory _symbol, uint8 _decimals, uint256 _totalSupply)
+    Token(_name, _symbol, _decimals, _totalSupply)
     public
   {
-    // Initialize totalSupply
-    totalSupply_ = _totalSupply;
-    // Initialize Holder
-    // This contract is owner of all cEthers
-    balances[address(this)] = _totalSupply;
+
   }
 
   function mint() external payable {
