@@ -642,8 +642,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       address underlyingAddress = (_from == address(cEther))
       ? address(ETH_TOKEN_ADDRESS)
       : CToken(_from).underlying();
-      // get rate for underlying address via paraswap
-      return getValueViaParaswap(underlyingAddress, _to, underlyingAmount);
+      // get rate for underlying address via DEX aggregators
+      return getValueViaDEXsAgregators(underlyingAddress, _to, underlyingAmount);
     }
     else{
       return 0;
@@ -689,7 +689,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     );
     // get ERC amount in ETH
     address token = poolPortal.getTokenByUniswapExchange(_from);
-    uint256 ercAmountInETH = getValueViaParaswap(token, address(ETH_TOKEN_ADDRESS), ercAmount);
+    uint256 ercAmountInETH = getValueViaDEXsAgregators(token, address(ETH_TOKEN_ADDRESS), ercAmount);
     // sum ETH with ERC amount in ETH
     uint256 totalETH = ethAmount.add(ercAmountInETH);
 
@@ -699,7 +699,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
     // convert ETH into _to asset via Paraswap
     else{
-      return getValueViaParaswap(address(ETH_TOKEN_ADDRESS), _to, totalETH);
+      return getValueViaDEXsAgregators(address(ETH_TOKEN_ADDRESS), _to, totalETH);
     }
   }
 
