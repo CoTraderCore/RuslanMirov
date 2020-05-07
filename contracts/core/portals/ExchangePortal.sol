@@ -486,16 +486,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   {
     if(_amount > 0){
       if(tokensTypes.getType(_from) == bytes32("CRYPTOCURRENCY")){
-        // try at first get value from 1inch aggregator
-        uint256 valueFromOneInch = getValueViaOneInch(_from, _to, _amount);
-        if(valueFromOneInch > 0){
-          return valueFromOneInch;
-        }
-        // if 1 inch can't return value, check from Paraswap aggregator
-        else{
-          uint256 valueFromParaswap = getValueViaParaswap(_from, _to, _amount);
-          return valueFromParaswap;
-        }
+        return getValueViaDEXsAgregators(_from, _to, _amount);
       }
       else if (tokensTypes.getType(_from) == bytes32("BANCOR POOL")){
         return getValueViaBancor(_from, _to, _amount);
@@ -553,6 +544,25 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
      else{
        return 0;
      }
+  }
+
+  // helper for get value via 1inch and Paraswap
+  function getValueViaDEXsAgregators(
+    address _from,
+    address _to,
+    uint256 _amount
+  )
+  public view returns (uint256){
+    // try get value from 1inch aggregator
+    uint256 valueFromOneInch = getValueViaOneInch(_from, _to, _amount);
+    if(valueFromOneInch > 0){
+      return valueFromOneInch;
+    }
+    // if 1 inch can't return value, check from Paraswap aggregator
+    else{
+      uint256 valueFromParaswap = getValueViaParaswap(_from, _to, _amount);
+      return valueFromParaswap;
+    }
   }
 
   // helper for get ratio between assets in Paraswap aggregator
