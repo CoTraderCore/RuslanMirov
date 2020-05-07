@@ -491,7 +491,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
         if(valueFromOneInch > 0){
           return valueFromOneInch;
         }
-        // if 1 inch can't return value, check from Paraswap aggregator 
+        // if 1 inch can't return value, check from Paraswap aggregator
         else{
           uint256 valueFromParaswap = getValueViaParaswap(_from, _to, _amount);
           return valueFromParaswap;
@@ -722,21 +722,6 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   // get underlying by cToken
   function getCTokenUnderlying(address _cToken) external override view returns(address){
     return CToken(_cToken).underlying();
-  }
-
-  /**
-  * @dev get value for cToken in base asset (ERC20 or ETH) ratio for this smart fund address
-  *
-  * @param _cToken       cToken address
-  */
-  function compoundGetCTokenValue(
-    address _cToken
-  )
-    external
-    view
-    returns(uint256 result)
-  {
-    result = CToken(_cToken).balanceOfUnderlying(address(this));
   }
 
   /**
