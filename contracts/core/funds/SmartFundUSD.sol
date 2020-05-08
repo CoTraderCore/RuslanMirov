@@ -88,10 +88,11 @@ contract SmartFundUSD is SmartFundCore {
       require(whitelist[msg.sender]);
 
     // Require that the amount sent is not 0
-    require(depositAmount > 0);
+    require(depositAmount > 0, "deposit amount should be more than zero");
 
     // Transfer stable coin from sender
-    require(IERC20(stableCoinAddress).transferFrom(msg.sender, address(this), depositAmount));
+    require(IERC20(stableCoinAddress).transferFrom(msg.sender, address(this), depositAmount),
+    "can not transfer from");
 
     totalWeiDeposited += depositAmount;
 
@@ -99,7 +100,7 @@ contract SmartFundUSD is SmartFundCore {
     uint256 shares = calculateDepositToShares(depositAmount);
 
     // If user would receive 0 shares, don't continue with deposit
-    require(shares != 0);
+    require(shares != 0, "shares can not be zero");
 
     // Add shares to total
     totalShares = totalShares.add(shares);
