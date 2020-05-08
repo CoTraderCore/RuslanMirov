@@ -174,17 +174,12 @@ contract PoolPortal {
         deadline);
       // reset approve (some ERC20 not allow do new approve if already approved)
       IERC20(tokenAddress).approve(_poolToken, 0);
-
-      require(poolAmount > 0, "UNI pool recieved amount can not be zerro");
-
       // transfer pool token back to smart fund
       IERC20(_poolToken).transfer(msg.sender, poolAmount);
       // transfer ERC20 remains
       uint256 remainsERC = IERC20(tokenAddress).balanceOf(address(this));
       if(remainsERC > 0)
           IERC20(tokenAddress).transfer(msg.sender, remainsERC);
-
-      setTokenType(_poolToken, "UNISWAP POOL");
     }else{
       // throw if such pool not Exist in Uniswap network
       revert();
