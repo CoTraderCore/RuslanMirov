@@ -20,13 +20,16 @@ NOTE: in separate console
 ```
 
 
-# Note
+# Note for TokensTypeStorage
 ```
-If You trying trade and get revert with Fail with error 'Sender not have permition for edit this contract'
+If You depoloy new Exchange Portal or Pool Portal or any new contract which use TokensTypeStorage
 
-This means You need add Your new Exchange/Pool portal to Tokens Type storage permitted for write
+You need execude TokensTypeStorage.addNewPermittedAddress(YourNewContractAddress)
 
-TokensTypeStorage.addNewPermittedAddress(YourNewAddress)
+This means You permitted for write for new Exchange/Pool portal (or any another contract which use TokensTypeStorage as writer)
+
+Otherwise, you will receive errors when trying to add a new token type (For Buy/Sell/Swap tokens)
+
 ```
 
 # Addresses
