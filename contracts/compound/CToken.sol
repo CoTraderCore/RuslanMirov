@@ -9,7 +9,8 @@ interface CToken {
     function liquidateBorrow(address borrower, uint repayAmount, CToken cTokenCollateral) external returns (uint);
     function redeem(uint redeemTokens) external returns (uint);
     function redeemUnderlying(uint redeemAmount) external returns (uint);
-    function exchangeRateCurrent() external view returns (uint);
+    function exchangeRateCurrent() external returns (uint);
+    function exchangeRateStored() public view returns (uint);
     function totalSupply() external view returns(uint);
     function balanceOfUnderlying(address account) external view returns (uint);
     function balanceOf(address account) external view returns (uint);

@@ -660,7 +660,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     view
     returns (uint256)
   {
-    try CToken(_from).exchangeRateCurrent() returns(uint256 rate)
+    try CToken(_from).exchangeRateStored() returns(uint256 rate)
     {
       uint256 underlyingAmount = _amount.mul(rate).div(1e18);
       return underlyingAmount;
