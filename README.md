@@ -20,7 +20,7 @@ NOTE: in separate console
 ```
 
 
-# Note for TokensTypeStorage
+# Note for TokensTypeStorage contract
 ```
 If You depoloy new Exchange Portal or Pool Portal or any new contract which use TokensTypeStorage
 
@@ -30,6 +30,13 @@ This means You permitted for write for new Exchange/Pool portal (or any another 
 
 Otherwise, you will receive errors when trying to add a new token type (For Buy/Sell/Swap tokens)
 
+```
+
+# Note for Permitted contracts
+
+```
+After deploy new Convert, Exchange or pool Portal don't forget add this new address in Permitted contract
+The same for add new Stable coin address, You need add this address to special Permitted contract  
 ```
 
 # Addresses
