@@ -11,7 +11,7 @@ interface CEther{
     function repayBorrow() external payable;
     function liquidateBorrow(address borrower, CToken cTokenCollateral) external payable;
     function exchangeRateCurrent() external returns (uint);
-    function exchangeRateStored() public view returns (uint);
+    function exchangeRateStored() external view returns (uint);
     function totalSupply() external view returns (uint);
     function balanceOfUnderlying(address account) external view returns (uint);
     function balanceOf(address account) external view returns (uint);
