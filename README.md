@@ -39,6 +39,18 @@ After deploy new Convert, Exchange or pool Portal don't forget add this new addr
 The same for add new Stable coin address, You need add this address to special Permitted contract  
 ```
 
+
+# Note for Compound Mint ERC20
+```
+For some reason mint ERC20 not works in Exchange portal for Ropsten, but works good for Mainnet  
+
+Details:
+https://stackoverflow.com/questions/61572243/erc20-transferfrom-not-working-yes-ive-checked-allowance
+
+Mainnet mint success tx example via Portal  
+https://etherscan.io/tx/0x3c0b7c4e78f26d6db6a64620db33a2db45a478ae86de7b42cd8419253589cc6c
+```
+
 # Addresses
 
 ```
