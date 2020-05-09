@@ -6,7 +6,7 @@ pragma solidity ^0.6.0;
 * Motivation:
 * Due fact tokens can be different like Uniswap/Bancor pool, Synthetix, Compound ect
 * we need a certain method for convert a certain token.
-* so we mark type for new token once after success convert
+* so we flag type for new token once after success convert
 */
 
 import "../../zeppelin-solidity/contracts/access/Ownable.sol";
@@ -16,11 +16,13 @@ contract TokensTypeStorage is Ownable {
   mapping(address => bool) public isRegistred;
   // tokens types
   mapping(address => bytes32) public getType;
+  // return true if input type alredy exist
+  mapping(bytes32 => bool) public isTypeRegistred;
   // addresses which can write to this contract
   mapping(address => bool) public isPermittedAddress;
 
   // all available types
-  string[] public allTypes;
+  bytes32[] public allTypes;
 
   modifier onlyPermitted() {
     require(isPermittedAddress[msg.sender], "Sender not have permition for edit this contract");
@@ -29,30 +31,42 @@ contract TokensTypeStorage is Ownable {
 
   // allow add new token type from trade portals
   function addNewTokenType(address _token, string calldata _type) external onlyPermitted {
-    // Don't add if alredy registred
+    // Don't flag this token if this token alredy registred
     if(isRegistred[_token])
       return;
 
-    // Add
-    getType[_token] = stringToBytes32(_type);
+    // convert string to bytes32
+    bytes32 typeToBytes = stringToBytes32(_type);
+
+    // flag new token
+    getType[_token] = typeToBytes;
     isRegistred[_token] = true;
-    allTypes.push(_type);
+
+    // Add new type
+    if(!isTypeRegistred[typeToBytes]){
+      isTypeRegistred[typeToBytes] = true;
+      allTypes.push(typeToBytes);
+    }
   }
 
 
   // allow update token type from owner wallet
   function setTokenTypeAsOwner(address _token, string calldata _type) external onlyOwner{
-    // get previos type
-    bytes32 prevType = getType[_token];
+    // convert string to bytes32 
+    bytes32 typeToBytes = stringToBytes32(_type);
 
-    // Update type
-    getType[_token] = stringToBytes32(_type);
+    // flag token with new type
+    getType[_token] = typeToBytes;
     isRegistred[_token] = true;
 
     // if new type unique add it to the list
-    if(stringToBytes32(_type) != prevType)
-       allTypes.push(_type);
+    if(!isTypeRegistred[typeToBytes]){
+      isTypeRegistred[typeToBytes] = true;
+      allTypes.push(typeToBytes);
+    }
   }
+
+
 
   function addNewPermittedAddress(address _permitted) public onlyOwner {
     isPermittedAddress[_permitted] = true;
