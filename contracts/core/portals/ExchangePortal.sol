@@ -366,6 +366,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       _transferFromSenderAndApproveTo(IERC20(sourceToken), sourceAmount, address(bancorNetwork));
       returnAmount = bancorNetwork.claimAndConvert(pathInERC20, sourceAmount, 1);
     }
+
+    setTokenType(destinationToken, "BANCOR_ASSET");
  }
 
 
@@ -488,10 +490,10 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
       if(tokensTypes.getType(_from) == bytes32("CRYPTOCURRENCY")){
         return getValueViaDEXsAgregators(_from, _to, _amount);
       }
-      else if (tokensTypes.getType(_from) == bytes32("BANCOR POOL")){
+      else if (tokensTypes.getType(_from) == bytes32("BANCOR_ASSET")){
         return getValueViaBancor(_from, _to, _amount);
       }
-      else if (tokensTypes.getType(_from) == bytes32("UNISWAP POOL")){
+      else if (tokensTypes.getType(_from) == bytes32("UNISWAP_POOL")){
         return getValueForUniswapPools(_from, _to, _amount);
       }
       else if (tokensTypes.getType(_from) == bytes32("COMPOUND")){
@@ -533,7 +535,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
        if(bancorResult > 0)
           return bancorResult;
 
-       // If Compound return 0, check from Uniswap pools for ensure this is not Uniswap
+       // If Compound return 0, check from UNISWAP_POOLs for ensure this is not Uniswap
        uint256 compoundResult = getValueViaCompound(_from, _to, _amount);
        if(compoundResult > 0)
           return compoundResult;

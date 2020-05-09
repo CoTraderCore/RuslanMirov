@@ -49,7 +49,7 @@ contract PoolPortalMock {
 
      IERC20(DAIBNTPoolToken).transfer(msg.sender, _amount);
 
-     setTokenType(address(_poolToken), "BANCOR POOL");
+     setTokenType(address(_poolToken), "BANCOR_ASSET");
   }
 
   // for mock 1 UNI = 0.5 ETH and 0.5 ERC
@@ -57,7 +57,7 @@ contract PoolPortalMock {
     require(IERC20(DAI).transferFrom(msg.sender, address(this), _ethAmount));
     IERC20(DAIUNIPoolToken).transfer(msg.sender, _ethAmount.mul(2));
 
-    setTokenType(_poolToken, "UNISWAP POOL");
+    setTokenType(_poolToken, "UNISWAP_POOL");
   }
 
 

@@ -142,7 +142,7 @@ contract PoolPortal {
     if(ercRemains > 0)
         ercConnector.transfer(msg.sender, ercRemains);
 
-    setTokenType(address(_poolToken), "BANCOR POOL");
+    setTokenType(address(_poolToken), "BANCOR_ASSET");
   }
 
 
@@ -184,7 +184,7 @@ contract PoolPortal {
       if(remainsERC > 0)
           IERC20(tokenAddress).transfer(msg.sender, remainsERC);
 
-      setTokenType(_poolToken, "UNISWAP POOL");
+      setTokenType(_poolToken, "UNISWAP_POOL");
     }else{
       // throw if such pool not Exist in Uniswap network
       revert();

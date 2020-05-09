@@ -61,10 +61,10 @@ contract ConvertPortal {
     if(tokensTypes.getType(_source) == bytes32("CRYPTOCURRENCY")){
       receivedAmount = convertCryptocurency(_source, _sourceAmount, _destination);
     }
-    else if (tokensTypes.getType(_source) == bytes32("BANCOR POOL")){
+    else if (tokensTypes.getType(_source) == bytes32("BANCOR_ASSET")){
       receivedAmount = convertBancorPool(_source, _sourceAmount, _destination);
     }
-    else if (tokensTypes.getType(_source) == bytes32("UNISWAP POOL")){
+    else if (tokensTypes.getType(_source) == bytes32("UNISWAP_POOL")){
       receivedAmount = convertUniswapPool(_source, _sourceAmount, _destination);
     }
     else if (tokensTypes.getType(_source) == bytes32("COMPOUND")){
