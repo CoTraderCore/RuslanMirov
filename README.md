@@ -54,17 +54,11 @@ https://etherscan.io/tx/0x3c0b7c4e78f26d6db6a64620db33a2db45a478ae86de7b42cd8419
 # Addresses
 
 ```
-Smart Fund Registry
-
-https://etherscan.io/tx/0x720dc9b18779b3b623868cab86e1356404ec08b5008c66d9bedbd879cddd74d4
-
-
-
 Tokens Type Storage
 
-0x67d635A86D5BFF3D3742a93761bE0e272BB7541e
+0x37ff4bc9a425F37d3Af95662c9D88A88d05f3417
 
-https://etherscan.io/tx/0xcfe256487d4b038800bb042c05060b66ccf057dd8b154ff8094f5914531bc4ab
+https://etherscan.io/tx/0x8aea1d0522615b4cf08b8ab6d4a24a7b281c847702e812b2d9573ab151595fdf
 
 
 Permitted Pools
@@ -74,18 +68,13 @@ Permitted Pools
 https://etherscan.io/tx/0x52a78b294f9c96cd51b0cede03aa7b0118a51182e9e4a4a7986e3d4bbfa8f966
 
 
+(Enable optimization)
+
 Pool Portal
 
-0x01fa1B31766c0e58a2C66b6FBa3C36128aea60E4
+0xd63495461cA711d59e480AC5c3827B7f7C334Fb3
 
-https://etherscan.io/tx/0x12ae8431baa3d734c33aa3e6258b5869148c9a23c9fd3cab8e30c615e8aaeb97
-
-
-Permitted Stables
-
-0x3621c85a4F3A4dCFF575550C5e1916b9bA4aeebd
-
-https://etherscan.io/tx/0xdb03759831e93da73d1dbb85359907de754ac245d8ede08874d6cc69bef11797
+https://etherscan.io/tx/0xd6ccc094d59ead16c3361ffab61eeb9d480dd6e78aceafa1fa394764c5043114
 
 
 
@@ -95,12 +84,20 @@ Permitted Exchanges
 
 https://etherscan.io/tx/0x8d17e3b13359b7627b514fa437cb26db2092f445c634bdded62dbf1ab745d82c
 
+(Enable optimization)
 
-Exchange Portal
+ExchangePortal
 
-0xDABB0a62894A19C0D4Cb86BEd6cFdfeE7c4652c2
+0xa145eCA55AE0E39D7c228ed7A962424a97AC74cB
 
-https://etherscan.io/tx/0x9c80c4f5d709fa1e9fde89139616b92c18071e2795d49c274654bfa4c67f4f0e
+https://etherscan.io/tx/0xe093c2d649e757798dfc2d89aeaed1976428ccc6f6ac61abfd3b8e5b2c706139
+
+
+Permitted Stables
+
+0x3621c85a4F3A4dCFF575550C5e1916b9bA4aeebd
+
+https://etherscan.io/tx/0xdb03759831e93da73d1dbb85359907de754ac245d8ede08874d6cc69bef11797
 
 
 Permitted Converts
@@ -110,27 +107,30 @@ Permitted Converts
 https://etherscan.io/tx/0x53e4ce06594a6e57e08d8b588a760e359655286a87569dd14bd46bcfa1711179
 
 
-
 Convert Portal
 
-0x77B71a9b0A047A075A905863993f0B455daB00e1
+0xA6A40e3c70710Be8D137F66A2697c8227821CD6c
 
-https://etherscan.io/tx/0x196d5f00f234e9fa6a296dfc0aded98829af00cd23e8e4f819ea6afac6d54b7f
-
-
-
-Smart Fund ETH Factory
-
-0x14f3a15911c35724490a603099dfdd2ec799d31a
-
-https://etherscan.io/tx/0x16f4bd5d8a4b579cf28033bb6316a2cc84e3684ea583a1be94ee43059d879250
+https://etherscan.io/tx/0x74cffc569d816a50be5991901b9ebeed91110778a2437c32aec3750aa3ba5864
 
 
-Smart Fund USD Factory
 
-0x814ef7F34F4086b655dCf3603D5fF31CFFa9012a
+(Enable optimization)
 
-https://etherscan.io/tx/0xb70ed3bab50c7252737dbff0bc563953a583a1061e5d4758bb5d1f36eb108d72
+ETH FACTORY
+
+0x9e8991f78367af819188e1a2aa6c9474bc48e696
+
+https://etherscan.io/tx/0xf5bea39269046f7dbced7daa2d5b7f9cad66f5a17c70df0c0477b7e2b0757404
+
+
+(Enable optimization)
+
+USD FACTORY
+
+0xea7c52716e07d8ff83d8f6e042f7c6105f5818b0
+
+https://etherscan.io/tx/0x58092737a36e20f318568c5b8d0347bb6695e32c7e99e24c85994fc8e2f3d47d
 
 
 
@@ -198,4 +198,5 @@ Compound CEther
 1inch
 
 0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E
+
 ```
