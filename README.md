@@ -54,6 +54,13 @@ https://etherscan.io/tx/0x3c0b7c4e78f26d6db6a64620db33a2db45a478ae86de7b42cd8419
 # Addresses
 
 ```
+Smart Fund registry
+
+0xd81736Eb54D4FbCDF8779E0b488dd1a5f12F2f17
+
+https://etherscan.io/tx/0x6bcd03dc664cb711e3a73dea8868a3f119e9eb1757e87d5307119659ba8bcee3
+
+
 Tokens Type Storage
 
 0x37ff4bc9a425F37d3Af95662c9D88A88d05f3417
